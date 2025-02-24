@@ -1,66 +1,19 @@
-// Tristan Hall CSC 584
+// 
+// @author Tristan Hall (tdhall6@ncsu.edu)
+// I used ChatGPT to create Align and Arrive
+#include "steering.h"
 #include <SFML/Graphics.hpp>
-#include <SFML/System.hpp>
-
 #include <iostream>
 #include <vector>
-const sf::Vector2f TOP_RIGHT = sf::Vector2f(600, 0);
-const sf::Vector2f BOT_RIGHT = sf::Vector2f(600, 600);
-const sf::Vector2f BOT_LEFT = sf::Vector2f(0, 600);
+#include <random>
+const sf::Vector2f TOP_RIGHT = sf::Vector2f(550, 0);
+const sf::Vector2f BOT_RIGHT = sf::Vector2f(550, 550);
+const sf::Vector2f BOT_LEFT = sf::Vector2f(0, 550);
 const sf::Vector2f TOP_LEFT = sf::Vector2f(0, 0);
 
-// Start from the left side, center vertically
 
-float getAngle(const sf::Vector2f& from, const sf::Vector2f& to) {
-    return atan2(to.y - from.y, to.x - from.x) * 180 / 3.14159f;
-}
-
-// Kinematic structure
-struct Kinematic {
-    sf::Vector2f position;
-    sf::Vector2f velocity;
-    float orientation;
-    float rotation;
-};
-
-class SteeringBehavior {
-public:
-    virtual void apply(Kinematic& character, const Kinematic& target, float deltaTime) = 0;
-    virtual ~SteeringBehavior() = default;
-};
-
-// Position matching behavior
-class PositionMatchSteering : public SteeringBehavior {
-public:
-    void apply(Kinematic& character, const Kinematic& target, float deltaTime) override {
-        character.position = target.position;
-    }
-};
-
-// Orientation matching behavior
-class OrientationMatchSteering : public SteeringBehavior {
-public:
-    void apply(Kinematic& character, const Kinematic& target, float deltaTime) override {
-        character.orientation = target.orientation;
-    }
-};
-
-// Velocity matching behavior
-class VelocityMatchSteering : public SteeringBehavior {
-public:
-    void apply(Kinematic& character, const Kinematic& target, float deltaTime) override {
-        character.velocity = target.velocity;
-    }
-};
-
-// Rotation matching behavior
-class RotationMatchSteering : public SteeringBehavior {
-public:
-    void apply(Kinematic& character, const Kinematic& target, float deltaTime) override {
-        character.rotation = target.rotation;
-    }
-};
-
+    
+//Breadcrumb class
 class crumb : sf::CircleShape
 {
     public:
@@ -68,9 +21,9 @@ class crumb : sf::CircleShape
         {
             //set initial position and size breadcrumbs   
             this->id = id;         
-            this->setRadius(10.f);
+            this->setRadius(5.f);
             this->setFillColor(sf::Color(0, 0, 255, 255));
-            this->setPosition({-100, -100});
+            this->setPosition(-1, -1);
         }
 
         //tell breadcrumb to render self, using current render window
@@ -82,7 +35,7 @@ class crumb : sf::CircleShape
         //set position of breadcrumb
         void drop(float x, float y)
         {
-            this->setPosition({x, y});
+            this->setPosition(x, y);
         }
 
         //set position of breadcrumb
@@ -94,87 +47,127 @@ class crumb : sf::CircleShape
     private:
         int id;
 };
+
 class boid
 {
-    public:
-        boid(sf::RenderWindow* w, sf::Texture& tex, std::vector<crumb>* crumbs)
+        public:
+            boid(sf::RenderWindow* w, sf::Texture& tex, std::vector<crumb>* crumbs, Kinematic boidKin)
+            : arrive(new Arrive()), align(new Align()){
+                window = w;
+                kinematic = boidKin;
+                speed = 1.0f;
+                drop_timer = 1000.f;
+                crumb_idx = 0;
+                sprite.setTexture(tex);
+                sprite.setScale(0.02f, 0.02f);
+                breadcrumbs = crumbs;
+            }
+        
+            ~boid() {
+                delete arrive;
+                delete align;
+            }
+        
+            void draw() {
+                window->draw(sprite);
+            }
+        
+            void update(float deltaTime, Kinematic targetkin) {
+               targetKinematic = targetkin;
+                move(deltaTime);
+            }
+        
+         void move(float deltaTime)
         {
-            window = w;
-            speed = 0.1f;
-            drop_timer = 100.f;
-            velocity = sf::Vector2f(1, 0);
-            target_idx = 1;
-            crumb_idx = 0;
-            target = TOP_RIGHT;
-            position = sf::Vector2f(0, 0);            
-            sprite.setTexture(tex);
-            sprite.setScale(0.1f, 0.1f);
-            breadcrumbs = crumbs;
-        }
-
-        void draw()
-        {            
-            window->draw(sprite);
-        }  
-
-        void move()
-        {
-            //basic timer for leaving breadcrumbs
             if (drop_timer > 0)
             {
                 drop_timer -= 0.1f;
             }
             else
             {
-                drop_timer = 100.f;
-                breadcrumbs->at(crumb_idx).drop(position);
+                drop_timer = 1000.f;
+                breadcrumbs->at(crumb_idx).drop(kinematic.position);
 
-                if (crumb_idx < 9)
+                if (crumb_idx < 14)
                     crumb_idx++;
                 else
                     crumb_idx = 0;
             }
 
+
+            //basic timer for leaving breadcrumbs
             //if reached target, switch to next target
-            if (reached(position, target))
+            if (reached(kinematic.position, targetKinematic.position))
             {
                 switch (target_idx)
                 {
                     case 0:
-                        target = TOP_RIGHT;
+                        targetKinematic.position = TOP_RIGHT;
                         target_idx = 1;
-                        velocity = sf::Vector2f(1, 0);
-                        orientation = 0;                     
+                        targetKinematic.velocity = sf::Vector2f(1, 0);
+                        targetKinematic.orientation = 0;                     
                         break;
                     case 1:
-                        target = BOT_RIGHT;
+                        targetKinematic.position = BOT_RIGHT;
                         target_idx = 2;
-                        velocity = sf::Vector2f(0, 1);
-                        orientation = 90;
+                        targetKinematic.velocity = sf::Vector2f(0, 1);
+                        targetKinematic.orientation = 1.5708;
                         break;
                     case 2:
-                        target = BOT_LEFT;
+                        targetKinematic.position = BOT_LEFT;
                         target_idx = 3;
-                        velocity = sf::Vector2f(-1, 0);
-                        orientation = 180;
+                        targetKinematic.velocity = sf::Vector2f(-1, 0);
+                        targetKinematic.orientation= 3.14159;
                         break;
                     case 3:
-                        target = TOP_LEFT;
+                        targetKinematic.position = TOP_LEFT;
                         target_idx = 0;
-                        velocity = sf::Vector2f(0, -1);
-                        orientation = 270;
+                        targetKinematic.velocity = sf::Vector2f(0, -1);
+                        targetKinematic.orientation = 4.71239;
                         break;
                 }
-
-                sprite.setRotation(orientation);
             }
             //else move toward target
             else
             {
-                position += velocity * speed;
-                sprite.setPosition(position);
+                sf::Vector2f acceleration = arrive->calculate(kinematic, targetKinematic);
+                float angularAcceleration = align->calculate(kinematic, targetKinematic);
+        
+                // Update velocity and position
+                kinematic.velocity += acceleration * deltaTime;
+                if (std::sqrt(kinematic.velocity.x * kinematic.velocity.x + kinematic.velocity.y * kinematic.velocity.y) > kinematic.maxSpeed)
+                    kinematic.velocity /= std::sqrt(kinematic.velocity.x * kinematic.velocity.x + kinematic.velocity.y * kinematic.velocity.y) / kinematic.maxSpeed;
+        
+                kinematic.position += kinematic.velocity * deltaTime;
+        
+                // Update rotation
+                kinematic.rotation +=  kinematic.maxRotation * deltaTime;
+                if (std::abs(kinematic.rotation) > kinematic.maxRotation){
+                    kinematic.rotation = kinematic.maxRotation * (kinematic.rotation / std::abs(kinematic.rotation));
+                    
+                kinematic.orientation += kinematic.rotation * deltaTime;}
+                float angle = std::atan2(kinematic.velocity.y, kinematic.velocity.x) * (180.0f / 3.1459); 
+                sprite.setRotation(angle);
+                if(kinematic.position.x > 1002){
+                    kinematic.position.x = 0;
+                }
+                if(kinematic.position.x < -2){
+                    kinematic.position.x = 1000;
+                }
+                if(kinematic.position.y < -2){
+                    kinematic.position.y = 1000;
+                }
+                if(kinematic.position.y > 1002){
+                    kinematic.position.y = 0;
+                }
+                sprite.setPosition(kinematic.position);
+                  //basic timer for leaving breadcrumb
+
+                std::cout << "m Position: (" << crumb_idx << ", " << kinematic.orientation  << ")" << std::endl;
             }
+           
         }
+       
 
         //check if boid has reached target position
         bool reached(sf::Vector2f pos, sf::Vector2f tar)        
@@ -185,103 +178,190 @@ class boid
             return false;
         }
 
-    private:
-        //indice variables
-        int target_idx;
+        private:
         int crumb_idx;
-        
-        //float variables
+        int target_idx;
         float drop_timer;
         float speed;
-        float orientation;
-        
-        //renderable objects
+    
         sf::Sprite sprite;
-        sf::RenderWindow* window;    
-        
-        //vector variables
-        sf::Vector2f target;    
-        sf::Vector2f position;
-        sf::Vector2f velocity;
-
-        //point of breadcrumbs
+        sf::RenderWindow* window;
         std::vector<crumb>* breadcrumbs;
+    
+        Kinematic kinematic;
+        Kinematic targetKinematic;
+        Arrive* arrive;
+        Align* align;
 };
-void moveAndRotateSprite(sf::Sprite& sprite,int orentation, float move)
-{
-    // Get the deltaTime for this specific sprite (time since last update)
-   
-    if (orentation == 0)
-    {
-        sprite.move({move, 0.f});
-     
-    }
-    else if (orentation == 1)  // After 2 seconds, start rotation
-    {
-        sprite.setRotation((90));
-        sprite.move({0.f, move});
-  
-    }
-    else if (orentation == 2)
-    {
-        sprite.setRotation((180));
-        sprite.move({-move, 0.f});
-   
-    }
-    else
-    {
-        sprite.setRotation((270));
-        sprite.move({0.f, -move});
-
-    }
-
-}
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode({600, 600}), "Homework 2");
+    sf::RenderWindow window(sf::VideoMode(1000, 1000), "SFML works!");
     sf::Texture texture;
-    
-    if (!texture.loadFromFile("boid.png")) // Ensure the texture loads properly
-        return -1;
+    sf::Vector2f lastMousePos(400, 300);
+    VelocitySteering velocityMatch;
+    Kinematic targetKinematic;
+    targetKinematic.position = sf::Vector2f(500, 500);
+    targetKinematic.velocity = sf::Vector2f(0, 0);
 
-    
-    sf::Sprite sprite(texture); 
+    Kinematic boidKinematic;
+    boidKinematic.position = sf::Vector2f(0, 0);
+    boidKinematic.velocity = sf::Vector2f(0.0f, 0.0f);
+    boidKinematic.maxSpeed = 350.0f;
+    boidKinematic.maxAcceleration = 100.0f;
+    boidKinematic.maxRotation = 5.0f;
+    boidKinematic.slowRadius = 3.0f;
+    boidKinematic.arrivalRadius = 3.0f;
+    boidKinematic.maxRotation = 5.0f;
+    boidKinematic.fleeRadius = 5.0f;
+    float wonderdrop_timer = 1000.f;
+    int runtype = 3;
+    Arrive arrive;
+    Align align;
+    // load a 32x32 rectangle that starts at (10, 10)
+    if (!texture.loadFromFile("boid.png"))
+    {
+        // error...
+    }
+    std::vector<crumb> breadcrumbs;
+    for(int i = 0; i < 15; i++)
+    {
+        crumb c(i);
+        breadcrumbs.push_back(c);
+    }   
     sf::Clock clock;
-    float duration = 2.0f; // Move across the screen in 1 second
-    float speed = 640.0f / duration; // Pixels per second
-    float speed2 = 480.0f / duration;
-    
-    sf::Time elapsedTime = sf::Time::Zero; // Track time
-
-    std::vector<sf::Sprite> sprites;
-    sprites.push_back(sprite); // Add initial sprite
-
+    std::vector<std::unique_ptr<boid>> boids;
+    for (int j = 0; j < 2; j++) {
+        boids.push_back(std::make_unique<boid>(&window, texture, &breadcrumbs,boidKinematic));
+        boidKinematic.position.x +=100.0f;
+    }
     while (window.isOpen())
     {
-                sf::Event event;
+        sf::Time deltaTime = clock.restart();
+        float dt = deltaTime.asSeconds();
+        sf::Event event;
+        sf::Vector2f prevMousePosition; // Stores the previous mouse position
+        bool firstMouseUpdate = true;
+        sf::Time elapsed2;
         while (window.pollEvent(event))
         {
-            // Request for closing the window
-            if (event.type == sf::Event::Closed)
-                window.close();
-            if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-            {
-               sf::Vector2i position = sf::Mouse::getPosition();
+            if (event.type == sf::Event::Closed){
+                window.close();          
             }
-                
-           
-                
-            // The escape key was pressed
-            if ((event.type == sf::Event::KeyPressed) && (event.key.code == sf::Keyboard::Escape))
-                window.close();
-        }
+            if(runtype == 1){
+           // mouse click Target
+                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left){
+                    std::cout << "mouse" << std::endl;
+                    sf::Vector2i localPosition = sf::Mouse::getPosition(window);
+                    targetKinematic.position = sf::Vector2f(localPosition);
+                    std::cout << "dt: (" << dt* 100 << ")" << std::endl;
+                    for (auto& b : boids) {
+                        b->update(dt,targetKinematic);
+                    }   
+                }  
+            }
+            else if(runtype == 2){
+                 // Get the current mouse position
+                if (event.type == sf::Event::MouseMoved) {
+                    // Get the current mouse position
+                    sf::Vector2i localPosition = sf::Mouse::getPosition(window);
+                    sf::Vector2f currentMousePosition(localPosition.x, localPosition.y);
+                    sf::Vector2f mouseVelocity;
+                    if (!firstMouseUpdate) {
+                        mouseVelocity = (currentMousePosition - prevMousePosition) / dt; // velocity = displacement / time
+                    } else {
+                        mouseVelocity = sf::Vector2f(0, 0); // No movement initially
+                        firstMouseUpdate = false;
+                    }
+                    // Update the target kinematic properties
+                    targetKinematic.position = currentMousePosition;
+                    targetKinematic.velocity = mouseVelocity;
+                    // Store current mouse position for next frame
+                    prevMousePosition = currentMousePosition;
+                    for (auto& b : boids) {
+                        b->update(dt, targetKinematic);
+                    }
+                }
+
+            }else if (runtype == 3 || runtype == 4) { 
+                static float accumulatedTime = 0.0f;
+                static size_t currentIndex = 0; // For runtype 4
+                std::cout << accumulatedTime << std::endl;
+               
+        
+                if (accumulatedTime < 100)
+                {
+                    accumulatedTime += 1;
+                }
+                else
+                {
+                    
+                    
+               
+                    std::cout << "1 second elapsed" << std::endl;
+        
+                    if (runtype == 3) {
+                        // Generate random position (same as before)
+                        static std::random_device rd;
+                        static std::mt19937 gen(rd());
+                        std::uniform_int_distribution<> distribX(0, window.getSize().x);
+                        std::uniform_int_distribution<> distribY(0, window.getSize().y);
+                        int randomX = distribX(gen);
+                        int randomY = distribY(gen);
+                        sf::Vector2f newPosition(randomX, randomY);
+                        targetKinematic.position = newPosition;
+                        std::cout << "1 second elapsed" << std::endl;
+        
+        
+                    } else if (runtype == 4) {
+                        static const std::vector<sf::Vector2f> locatArr = {
+                            {500.0f, -500.0f}, {500.0f, 1500.0f}, {1500.0f, 500.0f}, {-500.0f, 1500.0f}
+                        };
+                        targetKinematic.position = locatArr[currentIndex];
+                        currentIndex = (currentIndex + 1) % locatArr.size();
+                    }
+                    accumulatedTime = 0;
+                }
+                    std::cout << "Target Position: (" << boidKinematic.position.x << ", " << boidKinematic.position.y << ")" << std::endl;
+                   
+                    for (auto& b : boids) {
+                        b->update(dt, targetKinematic);
+                    }
+        
+                     // Subtract *after* the update!
+            } // End of while loop
+        
             
-        window.clear(sf::Color::Green);
-        for (const auto& s : sprites) {
-            window.draw(s);
-        }
+                //  REMOVE the mouse position update code entirely for runtype 3 and 4
+                //  The code below is what was removed:
+                /*
+                sf::Vector2i localPosition = sf::Mouse::getPosition(window);
+                targetKinematic.position = sf::Vector2f(localPosition);
+                std::cout << "Target Position: (" << targetKinematic.position.x << ", " << targetKinematic.position.y << ")" << std::endl;
+                for (auto& b : boids) {
+                    b->update(dt, targetKinematic);
+                }
+                */
+        
+            
+            }
+            for(int i = 0; i < breadcrumbs.size(); i++)
+            {
+                breadcrumbs[i].draw(&window);
+            }
+            window.clear(sf::Color(255,255,255,255));      
+            for (const auto& b : boids) {
+                b->move(dt);
+                b->draw();
+                for(int i = 0; i < breadcrumbs.size(); i++)
+                {
+                    breadcrumbs[i].draw(&window);
+                }
+            }
+            
         window.display();
+    
     }
 
-}
+    return 0;
+};
