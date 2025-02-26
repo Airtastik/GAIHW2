@@ -215,7 +215,15 @@ int main()
     boidKinematic.maxRotation = 5.0f;
     boidKinematic.fleeRadius = 5.0f;
     float wonderdrop_timer = 1000.f;
-    int runtype = 3;
+    int numBoids = 1; // number of boids on screen
+    /* Runtype 1: mouse click targeting
+       Runtype 2: mouse movement targeting
+       Runtype 3: wonder random
+       Runtype 4: wonder edge
+    */
+    int runtype = 4;
+    //
+    //
     Arrive arrive;
     Align align;
     // load a 32x32 rectangle that starts at (10, 10)
@@ -231,7 +239,7 @@ int main()
     }   
     sf::Clock clock;
     std::vector<std::unique_ptr<boid>> boids;
-    for (int j = 0; j < 2; j++) {
+    for (int j = 0; j < numBoids; j++) {
         boids.push_back(std::make_unique<boid>(&window, texture, &breadcrumbs,boidKinematic));
         boidKinematic.position.x +=100.0f;
     }
@@ -240,7 +248,7 @@ int main()
         sf::Time deltaTime = clock.restart();
         float dt = deltaTime.asSeconds();
         sf::Event event;
-        sf::Vector2f prevMousePosition; // Stores the previous mouse position
+        sf::Vector2f prevMousePosition; // 
         bool firstMouseUpdate = true;
         sf::Time elapsed2;
         while (window.pollEvent(event))
@@ -330,18 +338,6 @@ int main()
         
                      // Subtract *after* the update!
             } // End of while loop
-        
-            
-                //  REMOVE the mouse position update code entirely for runtype 3 and 4
-                //  The code below is what was removed:
-                /*
-                sf::Vector2i localPosition = sf::Mouse::getPosition(window);
-                targetKinematic.position = sf::Vector2f(localPosition);
-                std::cout << "Target Position: (" << targetKinematic.position.x << ", " << targetKinematic.position.y << ")" << std::endl;
-                for (auto& b : boids) {
-                    b->update(dt, targetKinematic);
-                }
-                */
         
             
             }

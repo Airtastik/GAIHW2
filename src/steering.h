@@ -10,6 +10,7 @@
 
 class Kinematic {
     public:
+      
         // main varables 
         sf::Vector2f position;
         sf::Vector2f velocity;
@@ -23,7 +24,7 @@ class Kinematic {
         float arrivalRadius;
         float slowRadius;
         float fleeRadius;
-
+        
 };
 
 struct SteeringData {
@@ -105,5 +106,7 @@ class Align {
             return targetRotation - character.rotation;
         }
 };
+
+    
 
 #endif // STEERING_BEHAVIOR_H

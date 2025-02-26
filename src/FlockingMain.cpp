@@ -4,12 +4,12 @@
 #include <vector>
 #include <cmath>
 
-const float SEPARATION_RADIUS = 100.0f;
+const float SEPARATION_RADIUS = 150.0f;
 const float ALIGNMENT_RADIUS = 100.0f;
 const float COHESION_RADIUS = 100.0f;
-const float SEPARATION_WEIGHT = 10.5f;
+const float SEPARATION_WEIGHT = 11.5f;
 const float ALIGNMENT_WEIGHT = 3.0f;
-const float COHESION_WEIGHT = 2.0f;
+const float COHESION_WEIGHT = 3.0f;
 
 class boid {
 public:
@@ -50,6 +50,18 @@ public:
 
         float angle = std::atan2(kinematic.velocity.y, kinematic.velocity.x) * (180.0f / 3.14159f);
         sprite.setRotation(angle);
+        if(kinematic.position.x > 1002){
+            kinematic.position.x = 0;
+        }
+        if(kinematic.position.x < -2){
+            kinematic.position.x = 1000;
+        }
+        if(kinematic.position.y < -2){
+            kinematic.position.y = 1000;
+        }
+        if(kinematic.position.y > 1002){
+            kinematic.position.y = 0;
+        }
         sprite.setPosition(kinematic.position);
     }
 
