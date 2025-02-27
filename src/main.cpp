@@ -11,8 +11,12 @@ const sf::Vector2f BOT_RIGHT = sf::Vector2f(550, 550);
 const sf::Vector2f BOT_LEFT = sf::Vector2f(0, 550);
 const sf::Vector2f TOP_LEFT = sf::Vector2f(0, 0);
 
-
-    
+const float SEPARATION_RADIUS = 150.0f;
+const float ALIGNMENT_RADIUS = 100.0f;
+const float COHESION_RADIUS = 100.0f;
+const float SEPARATION_WEIGHT = 20.5f;
+const float ALIGNMENT_WEIGHT = 3.0f;
+const float COHESION_WEIGHT = 3.0f;
 //Breadcrumb class
 class crumb : sf::CircleShape
 {
@@ -71,7 +75,7 @@ class boid
             void draw() {
                 window->draw(sprite);
             }
-        
+            
             void update(float deltaTime, Kinematic targetkin) {
                targetKinematic = targetkin;
                 move(deltaTime);
@@ -179,6 +183,7 @@ class boid
         }
 
         private:
+        
         int crumb_idx;
         int target_idx;
         float drop_timer;
@@ -193,9 +198,48 @@ class boid
         Arrive* arrive;
         Align* align;
 };
+void flocking(){
+    sf::RenderWindow window(sf::VideoMode(1000, 1000), "Flockingboids Simulation");
+    sf::Texture texture;
+    if (!texture.loadFromFile("boid.png")) {
+        std::cout << "No file found" << std::endl;
+    }
 
-int main()
-{
+    Kinematic targetKinematic;
+    targetKinematic.position = sf::Vector2f(500, 500);
+
+    std::vector<std::unique_ptr<flockingboid>> flockingboids;
+    for (int j = 0; j < 20; j++) {
+        Kinematic boidKinematic;
+        boidKinematic.position = sf::Vector2f(rand() % 1000, rand() % 1000);
+        boidKinematic.velocity = sf::Vector2f(0.0f, 0.0f);
+        boidKinematic.maxSpeed = 200.0f;
+        boidKinematic.arrivalRadius = 5.0f;
+        flockingboids.push_back(std::make_unique<flockingboid>(&window, texture, boidKinematic));
+    }
+
+    sf::Clock clock;
+    while (window.isOpen()) {
+        sf::Time deltaTime = clock.restart();
+        float dt = deltaTime.asSeconds();
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+        sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+        targetKinematic.position = sf::Vector2f(mousePos);
+
+        window.clear(sf::Color(255, 255, 255, 255));
+        for (auto& b : flockingboids) {
+            b->update(dt, flockingboids, targetKinematic);
+            b->draw();
+        }
+        window.display();
+    }
+
+};
+void AlignArriveAndWander(){
     sf::RenderWindow window(sf::VideoMode(1000, 1000), "SFML works!");
     sf::Texture texture;
     sf::Vector2f lastMousePos(400, 300);
@@ -221,7 +265,7 @@ int main()
        Runtype 3: wonder random
        Runtype 4: wonder edge
     */
-    int runtype = 4;
+    int runtype = 2;
     //
     //
     Arrive arrive;
@@ -287,7 +331,7 @@ int main()
                     // Store current mouse position for next frame
                     prevMousePosition = currentMousePosition;
                     for (auto& b : boids) {
-                        b->update(dt, targetKinematic);
+                        b->update(dt,targetKinematic);
                     }
                 }
 
@@ -303,9 +347,6 @@ int main()
                 }
                 else
                 {
-                    
-                    
-               
                     std::cout << "1 second elapsed" << std::endl;
         
                     if (runtype == 3) {
@@ -333,12 +374,11 @@ int main()
                     std::cout << "Target Position: (" << boidKinematic.position.x << ", " << boidKinematic.position.y << ")" << std::endl;
                    
                     for (auto& b : boids) {
-                        b->update(dt, targetKinematic);
+                        b->update(dt,targetKinematic);
                     }
         
                      // Subtract *after* the update!
-            } // End of while loop
-        
+            }
             
             }
             for(int i = 0; i < breadcrumbs.size(); i++)
@@ -356,8 +396,15 @@ int main()
             }
             
         window.display();
-    
+            
     }
-
+}
+bool flock = false;
+int main()
+{
+    if(flock == true)
+     flocking();
+    else
+    AlignArriveAndWander();
     return 0;
 };
