@@ -1,6 +1,6 @@
 // 
 // @author Tristan Hall (tdhall6@ncsu.edu)
-// I used ChatGPT to create Align and Arrive
+// I used ChatGPT to assist with creation
 #include "steering.h"
 #include <SFML/Graphics.hpp>
 #include <iostream>
