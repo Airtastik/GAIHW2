@@ -32,7 +32,7 @@ class crumb : sf::CircleShape
             //set initial position and size breadcrumbs   
             this->id = id;         
             this->setRadius(5.f);
-            this->setFillColor(sf::Color(0, 0, 255, 255));
+            this->setFillColor(sf::Color(0, 255, 0, 255));
             this->setPosition(-1, -1);
         }
 
@@ -66,7 +66,7 @@ class boid
                 window = w;
                 kinematic = boidKin;
                 speed = 1.0f;
-                drop_timer = 1000.f;
+                drop_timer = 100.f;
                 crumb_idx = 0;
                 sprite.setTexture(tex);
                 sprite.setScale(0.02f, 0.02f);
@@ -95,7 +95,7 @@ class boid
             }
             else
             {
-                drop_timer = 1000.f;
+                drop_timer = 100.f;
                 breadcrumbs->at(crumb_idx).drop(kinematic.position);
 
                 if (crumb_idx < 14)
@@ -187,6 +187,9 @@ class boid
                 return true;
             return false;
         }
+        sf::Vector2f getPosition() const {
+            return kinematic.position;
+        }
 
         private:
         
@@ -247,6 +250,46 @@ void flocking(){
 };
 int testPath() {
     sf::RenderWindow window(sf::VideoMode(1000, 1000), "Dijkstra & A* Pathfinding");
+    sf::Texture texture;
+    sf::Vector2f lastMousePos(400, 300);
+    VelocitySteering velocityMatch;
+    Kinematic targetKinematic;
+    targetKinematic.position = sf::Vector2f(500, 500);
+    targetKinematic.velocity = sf::Vector2f(0, 0);
+
+    Kinematic boidKinematic;
+    boidKinematic.position = sf::Vector2f(0, 0);
+    boidKinematic.velocity = sf::Vector2f(0.0f, 0.0f);
+    boidKinematic.maxSpeed = 60.0f;
+    boidKinematic.maxAcceleration = 100.0f;
+    boidKinematic.maxRotation = 130.0f;
+    boidKinematic.slowRadius = 1.0f;
+    boidKinematic.arrivalRadius = 1.0f;
+    boidKinematic.fleeRadius = 5.0f;
+    float wonderdrop_timer = 1000.f;
+    int numBoids = 1; // number of boids on screen
+
+    //
+    //
+    Arrive arrive;
+    Align align;
+    // load a 32x32 rectangle that starts at (10, 10)
+    if (!texture.loadFromFile("boid.png"))
+    {
+        // error...
+    }
+    std::vector<crumb> breadcrumbs;
+    for(int i = 0; i < 100; i++)
+    {
+        crumb c(i);
+        breadcrumbs.push_back(c);
+    }   
+    sf::Clock clock;
+    std::vector<std::unique_ptr<boid>> boids;
+    for (int j = 0; j < numBoids; j++) {
+        boids.push_back(std::make_unique<boid>(&window, texture, &breadcrumbs,boidKinematic));
+        boidKinematic.position.x +=100.0f;
+    }
 
     // Define the 10x10 map
     std::vector<std::vector<int>> mapData = {
@@ -313,7 +356,13 @@ int testPath() {
 
     // Define start and goal positions
     sf::Vector2i start(0, 0);  // Starting position (top-left corner)
-    sf::Vector2i goal(9, 9);   // Goal position (bottom-right corner)
+    sf::Vector2i goal(9, 9);   // Goal position (bottom-right corner)// Stores the path
+    int currentTargetIndex = 0; // Keeps track of the current target index in the path
+
+// Define start and goal positions (can be fixed or random)
+
+
+    // Generate the path (can be done during initialization or periodically)
 
     // Call the findPath function with A* and Euclidean heuristic (change to Manhattan for that heuristic)
     bool useAStar = false; // Set this to false to use Dijkstra
@@ -322,33 +371,82 @@ int testPath() {
 
     // Create a separate vertex array for the path
     sf::VertexArray pathVertices(sf::Quads);
+  
     for (const auto& p : path) {
         sf::Vector2f topLeft(p.x * tileSize, p.y * tileSize);
         sf::Vector2f topRight((p.x + 1) * tileSize, p.y * tileSize);
         sf::Vector2f bottomRight((p.x + 1) * tileSize, (p.y + 1) * tileSize);
         sf::Vector2f bottomLeft(p.x * tileSize, (p.y + 1) * tileSize);
-
+        sf::Vector2f center((p.x + 0.5f) * tileSize, (p.y + 0.5f) * tileSize);
         // Path is drawn in blue
+ ;
         pathVertices.append(sf::Vertex(topLeft, sf::Color::Blue));
         pathVertices.append(sf::Vertex(topRight, sf::Color::Blue));
         pathVertices.append(sf::Vertex(bottomRight, sf::Color::Blue));
         pathVertices.append(sf::Vertex(bottomLeft, sf::Color::Blue));
     }
-
-    // Game loop
+    std::vector<sf::Vector2i> bestPathCenters;
+    
+    for (const sf::Vector2i& node : path) {
+        sf::Vector2i center((node.x + 0.5f) * tileSize, (node.y + 0.5f) * tileSize);
+        bestPathCenters.push_back(center);
+        std::cout << "Calculated Center: (" << center.x << ", " << center.y << ")\n";
+    }
+    const float positionTolerance = 200.0f;
     while (window.isOpen()) {
+        sf::Time deltaTime = clock.restart();
+        float dt = deltaTime.asSeconds();
         sf::Event event;
+        sf::Vector2f prevMousePosition; 
+        bool firstMouseUpdate = true;
+        sf::Time elapsed2;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
-        }
+             
+                if (!path.empty() && currentTargetIndex < path.size()) {
+                    // Get the current target position from the path
+                    sf::Vector2i targetNode = bestPathCenters[currentTargetIndex];
+                    targetKinematic.position = sf::Vector2f(targetNode.x , targetNode.y); // Scale to match tile size
+                    for (const auto& node : path) {
+                        sf::Vector2f worldPosition(targetKinematic.position.x , targetKinematic.position.x );
+                        std::cout << "World Position: (" << worldPosition.x << ", " << worldPosition.y << ")\n";
+                    }
+                
+                    // Update boid to move toward the current target node
+                    for (auto& b : boids) {
+                        b->update(dt, targetKinematic);
+                    }
+                
+                    // Check if the boid reached the current target node (you can add a small buffer to prevent overshooting)
+                    sf::Vector2f boidPosition = boids[0]->getPosition();
+                    float distance = std::sqrt(std::pow(boidPosition.x - targetKinematic.position.x , 2) +
+                                            std::pow(boidPosition.y - targetKinematic.position.y, 2));
 
-        // Clear the window
+                    if (distance <= positionTolerance) { // Within threshold, move to next node
+                        currentTargetIndex++;
+                    }
+                }
+        }
         window.clear();
 
         // Draw the map and path
         window.draw(vertices);
         window.draw(pathVertices);
+        for(int i = 0; i < breadcrumbs.size(); i++)
+            {
+                breadcrumbs[i].draw(&window);
+            }
+           // window.clear(sf::Color(255,255,255,255));      
+            for (const auto& b : boids) {
+                b->move(dt);
+                b->draw();
+                for(int i = 0; i < breadcrumbs.size(); i++)
+                {
+                    breadcrumbs[i].draw(&window);
+                }
+        }
+        // Clear the window
         // Display the contents of the window
         window.display();
     }
@@ -381,7 +479,7 @@ void AlignArriveAndWander(){
        Runtype 3: wonder random
        Runtype 4: wonder edge
     */
-    int runtype = 1;
+    int runtype = 2;
     //
     //
     Arrive arrive;
@@ -396,8 +494,7 @@ void AlignArriveAndWander(){
     {
         crumb c(i);
         breadcrumbs.push_back(c);
-    }
-       
+    }   
     sf::Clock clock;
     std::vector<std::unique_ptr<boid>> boids;
     for (int j = 0; j < numBoids; j++) {
@@ -420,10 +517,10 @@ void AlignArriveAndWander(){
             if(runtype == 1){
            // mouse click Target
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left){
-                   // std::cout << "mouse" << std::endl;
+                    std::cout << "mouse" << std::endl;
                     sf::Vector2i localPosition = sf::Mouse::getPosition(window);
                     targetKinematic.position = sf::Vector2f(localPosition);
-                   // std::cout << "dt: (" << dt* 100 << ")" << std::endl;
+                    std::cout << "dt: (" << dt* 100 << ")" << std::endl;
                     for (auto& b : boids) {
                         b->update(dt,targetKinematic);
                     }   
@@ -495,113 +592,7 @@ void AlignArriveAndWander(){
                     }
         
                      // Subtract *after* the update!
-            }else if (runtype == 5) {
-                std::vector<sf::Vector2i> path; // Stores the path
-                int  currentTargetIndex(0); // Keeps track of the current target index in the path
-                std::vector<std::vector<int>> mapData = {
-                    {0,0,0,0,1,0,0,0,0,0},
-                    {0,0,1,0,1,0,0,0,0,0},
-                    {0,0,1,1,1,0,0,0,0,0},
-                    {0,0,0,0,0,0,1,0,0,1},
-                    {0,0,0,0,1,1,1,0,0,0},
-                    {0,0,0,0,1,0,0,0,1,1},
-                    {0,0,0,0,1,0,0,0,0,0},
-                    {1,1,1,1,1,0,0,0,0,0},
-                    {1,0,0,0,1,0,0,0,0,0},
-                    {1,0,0,0,1,0,0,0,0,0}    
-                };
-            
-                // Tile size for visualization
-                const int tileSize = 100;
-            
-                // Create a vertex array to hold the vertices of the map
-                sf::VertexArray vertices(sf::Quads);
-            
-                // Iterate through the map and create vertices for each tile
-                for (int y = 0; y < mapData.size(); ++y) {
-                    for (int x = 0; x < mapData[y].size(); ++x) {
-                        sf::Vector2f topLeft(x * tileSize, y * tileSize);
-                        sf::Vector2f topRight((x + 1) * tileSize, y * tileSize);
-                        sf::Vector2f bottomRight((x + 1) * tileSize, (y + 1) * tileSize);
-                        sf::Vector2f bottomLeft(x * tileSize, (y + 1) * tileSize);
-            
-                        sf::Vector2i start(0, 0);  // Starting position (top-left corner)
-                        sf::Vector2i goal(9, 9);   // Goal position (bottom-right corner)
-                
-                        // Check if the current tile is the start or goal
-                        if (x == start.x && y == start.y) {
-                            // If it's the start, make it pink
-                            vertices.append(sf::Vertex(topLeft, sf::Color::Red)); // red
-                            vertices.append(sf::Vertex(topRight, sf::Color::Red));
-                            vertices.append(sf::Vertex(bottomRight, sf::Color::Red));
-                            vertices.append(sf::Vertex(bottomLeft, sf::Color::Red));
-                        } else if (x == goal.x && y == goal.y) {
-                            // If it's the goal, make it green
-                            vertices.append(sf::Vertex(topLeft, sf::Color::Green)); // Green
-                            vertices.append(sf::Vertex(topRight, sf::Color::Green));
-                            vertices.append(sf::Vertex(bottomRight, sf::Color::Green));
-                            vertices.append(sf::Vertex(bottomLeft, sf::Color::Green));
-                        }
-            
-                        // If the tile is passable (0), make it White
-                        if (mapData[y][x] == 0) {
-                            vertices.append(sf::Vertex(topLeft, sf::Color::White));
-                            vertices.append(sf::Vertex(topRight, sf::Color::White));
-                            vertices.append(sf::Vertex(bottomRight, sf::Color::White));
-                            vertices.append(sf::Vertex(bottomLeft, sf::Color::White));
-                        }
-                        // If the tile is impassable (1), make it Black
-                        else {
-                            vertices.append(sf::Vertex(topLeft, sf::Color::Black));
-                            vertices.append(sf::Vertex(topRight, sf::Color::Black));
-                            vertices.append(sf::Vertex(bottomRight, sf::Color::Black));
-                            vertices.append(sf::Vertex(bottomLeft, sf::Color::Black));
-                        }
-                    }
-                }
-            
-                // Define start and goal positions
-                sf::Vector2i start(0, 0);  // Starting position (top-left corner)
-                sf::Vector2i goal(9, 9);   // Goal position (bottom-right corner)
-            
-                // Call the findPath function with A* and Euclidean heuristic (change to Manhattan for that heuristic)
-                bool useAStar = false; // Set this to false to use Dijkstra
-                HeuristicType heuristicType = HeuristicType::Euclidean; // Choose between Manhattan and Euclidean
-                path = findPath(mapData, start, goal, useAStar, heuristicType);
-            
-                // Create a separate vertex array for the path
-                sf::VertexArray pathVertices(sf::Quads);
-                for (const auto& p : path) {
-                    sf::Vector2f topLeft(p.x * tileSize, p.y * tileSize);
-                    sf::Vector2f topRight((p.x + 1) * tileSize, p.y * tileSize);
-                    sf::Vector2f bottomRight((p.x + 1) * tileSize, (p.y + 1) * tileSize);
-                    sf::Vector2f bottomLeft(p.x * tileSize, (p.y + 1) * tileSize);
-            
-                    // Path is drawn in blue
-                    pathVertices.append(sf::Vertex(topLeft, sf::Color::Blue));
-                    pathVertices.append(sf::Vertex(topRight, sf::Color::Blue));
-                    pathVertices.append(sf::Vertex(bottomRight, sf::Color::Blue));
-                    pathVertices.append(sf::Vertex(bottomLeft, sf::Color::Blue));
-                }
-            
-                // In your update loop
-                if (!path.empty() ) {
-                    // Get the current target position from the path
-                    sf::Vector2i targetNode = path[currentTargetIndex];
-                    targetKinematic.position = sf::Vector2f(targetNode.x * tileSize, targetNode.y * tileSize); // Scale to match tile size
-                
-                    // Update boid to move toward the current target node
-                    for (auto& b : boids) {
-                        b->update(dt, targetKinematic);
-                    }
-                
-                    // Check if the boid reached the current target node (you can add a small buffer to prevent overshooting)
-                    if (boidKinematic.position == targetKinematic.position) {
-                        currentTargetIndex ++; // Move to the next node in the path
-                    }
-                }
-               
-           
+            }
             }
             for(int i = 0; i < breadcrumbs.size(); i++)
             {
@@ -621,14 +612,14 @@ void AlignArriveAndWander(){
             
     }
 }
-}
 bool flock = false;
 int main()
 {
     testPath();
- /*   if(flock == true)
+   /*if(flock == true)
      flocking();
     else
-    AlignArriveAndWander();*/
+    AlignArriveAndWander();
+   */
     return 0;
 };

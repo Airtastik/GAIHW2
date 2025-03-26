@@ -5,4 +5,4 @@ Runtype 1: mouse click targeting
 Runtype 2: mouse movement targeting
 Runtype 3: wonder random
 Runtype 4: wonder edge
-3. on linux run with make then ./main
+3. on linux run with make then ./main make sure to compile path .cpp too
