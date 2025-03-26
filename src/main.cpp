@@ -2,10 +2,16 @@
 // @author Tristan Hall (tdhall6@ncsu.edu)
 // I used ChatGPT to assist with creation
 #include "steering.h"
+#include "vertex.h"
+#include "pathmap.h"
+#include "PATHFIND.h"
+#include "path.hpp"
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <vector>
 #include <random>
+#include <queue>
+
 const sf::Vector2f TOP_RIGHT = sf::Vector2f(550, 0);
 const sf::Vector2f BOT_RIGHT = sf::Vector2f(550, 550);
 const sf::Vector2f BOT_LEFT = sf::Vector2f(0, 550);
@@ -239,6 +245,116 @@ void flocking(){
     }
 
 };
+int testPath() {
+    sf::RenderWindow window(sf::VideoMode(1000, 1000), "Dijkstra & A* Pathfinding");
+
+    // Define the 10x10 map
+    std::vector<std::vector<int>> mapData = {
+        {0,0,0,0,1,0,0,0,0,0},
+        {0,0,1,0,1,0,0,0,0,0},
+        {0,0,1,1,1,0,0,0,0,0},
+        {0,0,0,0,0,0,1,0,0,1},
+        {0,0,0,0,1,1,1,0,0,0},
+        {0,0,0,0,1,0,0,0,1,1},
+        {0,0,0,0,1,0,0,0,0,0},
+        {1,1,1,1,1,0,0,0,0,0},
+        {1,0,0,0,1,0,0,0,0,0},
+        {1,0,0,0,1,0,0,0,0,0}    
+    };
+
+    // Tile size for visualization
+    const int tileSize = 100;
+
+    // Create a vertex array to hold the vertices of the map
+    sf::VertexArray vertices(sf::Quads);
+
+    // Iterate through the map and create vertices for each tile
+    for (int y = 0; y < mapData.size(); ++y) {
+        for (int x = 0; x < mapData[y].size(); ++x) {
+            sf::Vector2f topLeft(x * tileSize, y * tileSize);
+            sf::Vector2f topRight((x + 1) * tileSize, y * tileSize);
+            sf::Vector2f bottomRight((x + 1) * tileSize, (y + 1) * tileSize);
+            sf::Vector2f bottomLeft(x * tileSize, (y + 1) * tileSize);
+
+            sf::Vector2i start(0, 0);  // Starting position (top-left corner)
+            sf::Vector2i goal(9, 9);   // Goal position (bottom-right corner)
+    
+            // Check if the current tile is the start or goal
+            if (x == start.x && y == start.y) {
+                // If it's the start, make it pink
+                vertices.append(sf::Vertex(topLeft, sf::Color::Red)); // red
+                vertices.append(sf::Vertex(topRight, sf::Color::Red));
+                vertices.append(sf::Vertex(bottomRight, sf::Color::Red));
+                vertices.append(sf::Vertex(bottomLeft, sf::Color::Red));
+            } else if (x == goal.x && y == goal.y) {
+                // If it's the goal, make it green
+                vertices.append(sf::Vertex(topLeft, sf::Color::Green)); // Green
+                vertices.append(sf::Vertex(topRight, sf::Color::Green));
+                vertices.append(sf::Vertex(bottomRight, sf::Color::Green));
+                vertices.append(sf::Vertex(bottomLeft, sf::Color::Green));
+            }
+
+            // If the tile is passable (0), make it White
+            if (mapData[y][x] == 0) {
+                vertices.append(sf::Vertex(topLeft, sf::Color::White));
+                vertices.append(sf::Vertex(topRight, sf::Color::White));
+                vertices.append(sf::Vertex(bottomRight, sf::Color::White));
+                vertices.append(sf::Vertex(bottomLeft, sf::Color::White));
+            }
+            // If the tile is impassable (1), make it Black
+            else {
+                vertices.append(sf::Vertex(topLeft, sf::Color::Black));
+                vertices.append(sf::Vertex(topRight, sf::Color::Black));
+                vertices.append(sf::Vertex(bottomRight, sf::Color::Black));
+                vertices.append(sf::Vertex(bottomLeft, sf::Color::Black));
+            }
+        }
+    }
+
+    // Define start and goal positions
+    sf::Vector2i start(0, 0);  // Starting position (top-left corner)
+    sf::Vector2i goal(9, 9);   // Goal position (bottom-right corner)
+
+    // Call the findPath function with A* and Euclidean heuristic (change to Manhattan for that heuristic)
+    bool useAStar = false; // Set this to false to use Dijkstra
+    HeuristicType heuristicType = HeuristicType::Euclidean; // Choose between Manhattan and Euclidean
+    std::vector<sf::Vector2i> path = findPath(mapData, start, goal, useAStar, heuristicType);
+
+    // Create a separate vertex array for the path
+    sf::VertexArray pathVertices(sf::Quads);
+    for (const auto& p : path) {
+        sf::Vector2f topLeft(p.x * tileSize, p.y * tileSize);
+        sf::Vector2f topRight((p.x + 1) * tileSize, p.y * tileSize);
+        sf::Vector2f bottomRight((p.x + 1) * tileSize, (p.y + 1) * tileSize);
+        sf::Vector2f bottomLeft(p.x * tileSize, (p.y + 1) * tileSize);
+
+        // Path is drawn in blue
+        pathVertices.append(sf::Vertex(topLeft, sf::Color::Blue));
+        pathVertices.append(sf::Vertex(topRight, sf::Color::Blue));
+        pathVertices.append(sf::Vertex(bottomRight, sf::Color::Blue));
+        pathVertices.append(sf::Vertex(bottomLeft, sf::Color::Blue));
+    }
+
+    // Game loop
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+
+        // Clear the window
+        window.clear();
+
+        // Draw the map and path
+        window.draw(vertices);
+        window.draw(pathVertices);
+        // Display the contents of the window
+        window.display();
+    }
+   
+    return 0;
+}
 void AlignArriveAndWander(){
     sf::RenderWindow window(sf::VideoMode(1000, 1000), "SFML works!");
     sf::Texture texture;
@@ -265,7 +381,7 @@ void AlignArriveAndWander(){
        Runtype 3: wonder random
        Runtype 4: wonder edge
     */
-    int runtype = 2;
+    int runtype = 1;
     //
     //
     Arrive arrive;
@@ -280,7 +396,8 @@ void AlignArriveAndWander(){
     {
         crumb c(i);
         breadcrumbs.push_back(c);
-    }   
+    }
+       
     sf::Clock clock;
     std::vector<std::unique_ptr<boid>> boids;
     for (int j = 0; j < numBoids; j++) {
@@ -303,10 +420,10 @@ void AlignArriveAndWander(){
             if(runtype == 1){
            // mouse click Target
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left){
-                    std::cout << "mouse" << std::endl;
+                   // std::cout << "mouse" << std::endl;
                     sf::Vector2i localPosition = sf::Mouse::getPosition(window);
                     targetKinematic.position = sf::Vector2f(localPosition);
-                    std::cout << "dt: (" << dt* 100 << ")" << std::endl;
+                   // std::cout << "dt: (" << dt* 100 << ")" << std::endl;
                     for (auto& b : boids) {
                         b->update(dt,targetKinematic);
                     }   
@@ -378,8 +495,113 @@ void AlignArriveAndWander(){
                     }
         
                      // Subtract *after* the update!
-            }
+            }else if (runtype == 5) {
+                std::vector<sf::Vector2i> path; // Stores the path
+                int  currentTargetIndex(0); // Keeps track of the current target index in the path
+                std::vector<std::vector<int>> mapData = {
+                    {0,0,0,0,1,0,0,0,0,0},
+                    {0,0,1,0,1,0,0,0,0,0},
+                    {0,0,1,1,1,0,0,0,0,0},
+                    {0,0,0,0,0,0,1,0,0,1},
+                    {0,0,0,0,1,1,1,0,0,0},
+                    {0,0,0,0,1,0,0,0,1,1},
+                    {0,0,0,0,1,0,0,0,0,0},
+                    {1,1,1,1,1,0,0,0,0,0},
+                    {1,0,0,0,1,0,0,0,0,0},
+                    {1,0,0,0,1,0,0,0,0,0}    
+                };
             
+                // Tile size for visualization
+                const int tileSize = 100;
+            
+                // Create a vertex array to hold the vertices of the map
+                sf::VertexArray vertices(sf::Quads);
+            
+                // Iterate through the map and create vertices for each tile
+                for (int y = 0; y < mapData.size(); ++y) {
+                    for (int x = 0; x < mapData[y].size(); ++x) {
+                        sf::Vector2f topLeft(x * tileSize, y * tileSize);
+                        sf::Vector2f topRight((x + 1) * tileSize, y * tileSize);
+                        sf::Vector2f bottomRight((x + 1) * tileSize, (y + 1) * tileSize);
+                        sf::Vector2f bottomLeft(x * tileSize, (y + 1) * tileSize);
+            
+                        sf::Vector2i start(0, 0);  // Starting position (top-left corner)
+                        sf::Vector2i goal(9, 9);   // Goal position (bottom-right corner)
+                
+                        // Check if the current tile is the start or goal
+                        if (x == start.x && y == start.y) {
+                            // If it's the start, make it pink
+                            vertices.append(sf::Vertex(topLeft, sf::Color::Red)); // red
+                            vertices.append(sf::Vertex(topRight, sf::Color::Red));
+                            vertices.append(sf::Vertex(bottomRight, sf::Color::Red));
+                            vertices.append(sf::Vertex(bottomLeft, sf::Color::Red));
+                        } else if (x == goal.x && y == goal.y) {
+                            // If it's the goal, make it green
+                            vertices.append(sf::Vertex(topLeft, sf::Color::Green)); // Green
+                            vertices.append(sf::Vertex(topRight, sf::Color::Green));
+                            vertices.append(sf::Vertex(bottomRight, sf::Color::Green));
+                            vertices.append(sf::Vertex(bottomLeft, sf::Color::Green));
+                        }
+            
+                        // If the tile is passable (0), make it White
+                        if (mapData[y][x] == 0) {
+                            vertices.append(sf::Vertex(topLeft, sf::Color::White));
+                            vertices.append(sf::Vertex(topRight, sf::Color::White));
+                            vertices.append(sf::Vertex(bottomRight, sf::Color::White));
+                            vertices.append(sf::Vertex(bottomLeft, sf::Color::White));
+                        }
+                        // If the tile is impassable (1), make it Black
+                        else {
+                            vertices.append(sf::Vertex(topLeft, sf::Color::Black));
+                            vertices.append(sf::Vertex(topRight, sf::Color::Black));
+                            vertices.append(sf::Vertex(bottomRight, sf::Color::Black));
+                            vertices.append(sf::Vertex(bottomLeft, sf::Color::Black));
+                        }
+                    }
+                }
+            
+                // Define start and goal positions
+                sf::Vector2i start(0, 0);  // Starting position (top-left corner)
+                sf::Vector2i goal(9, 9);   // Goal position (bottom-right corner)
+            
+                // Call the findPath function with A* and Euclidean heuristic (change to Manhattan for that heuristic)
+                bool useAStar = false; // Set this to false to use Dijkstra
+                HeuristicType heuristicType = HeuristicType::Euclidean; // Choose between Manhattan and Euclidean
+                path = findPath(mapData, start, goal, useAStar, heuristicType);
+            
+                // Create a separate vertex array for the path
+                sf::VertexArray pathVertices(sf::Quads);
+                for (const auto& p : path) {
+                    sf::Vector2f topLeft(p.x * tileSize, p.y * tileSize);
+                    sf::Vector2f topRight((p.x + 1) * tileSize, p.y * tileSize);
+                    sf::Vector2f bottomRight((p.x + 1) * tileSize, (p.y + 1) * tileSize);
+                    sf::Vector2f bottomLeft(p.x * tileSize, (p.y + 1) * tileSize);
+            
+                    // Path is drawn in blue
+                    pathVertices.append(sf::Vertex(topLeft, sf::Color::Blue));
+                    pathVertices.append(sf::Vertex(topRight, sf::Color::Blue));
+                    pathVertices.append(sf::Vertex(bottomRight, sf::Color::Blue));
+                    pathVertices.append(sf::Vertex(bottomLeft, sf::Color::Blue));
+                }
+            
+                // In your update loop
+                if (!path.empty() ) {
+                    // Get the current target position from the path
+                    sf::Vector2i targetNode = path[currentTargetIndex];
+                    targetKinematic.position = sf::Vector2f(targetNode.x * tileSize, targetNode.y * tileSize); // Scale to match tile size
+                
+                    // Update boid to move toward the current target node
+                    for (auto& b : boids) {
+                        b->update(dt, targetKinematic);
+                    }
+                
+                    // Check if the boid reached the current target node (you can add a small buffer to prevent overshooting)
+                    if (boidKinematic.position == targetKinematic.position) {
+                        currentTargetIndex ++; // Move to the next node in the path
+                    }
+                }
+               
+           
             }
             for(int i = 0; i < breadcrumbs.size(); i++)
             {
@@ -399,12 +621,14 @@ void AlignArriveAndWander(){
             
     }
 }
+}
 bool flock = false;
 int main()
 {
-    if(flock == true)
+    testPath();
+ /*   if(flock == true)
      flocking();
     else
-    AlignArriveAndWander();
+    AlignArriveAndWander();*/
     return 0;
 };
