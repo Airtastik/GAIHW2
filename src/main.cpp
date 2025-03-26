@@ -173,7 +173,7 @@ class boid
                 sprite.setPosition(kinematic.position);
                   //basic timer for leaving breadcrumb
 
-                std::cout << "m Position: (" << crumb_idx << ", " << kinematic.orientation  << ")" << std::endl;
+             //   std::cout << "m Position: (" << crumb_idx << ", " << kinematic.orientation  << ")" << std::endl;
             }
            
         }
