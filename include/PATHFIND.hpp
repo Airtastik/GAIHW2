@@ -6,8 +6,8 @@
 #include <unordered_map>
 #include <cmath>
 #include <algorithm>
-#include "vertex.h"
-#include "pathmap.h"
+#include "vertex.hpp"
+#include "pathmap.hpp"
 
 class Path {
 public:

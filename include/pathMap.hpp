@@ -2,7 +2,7 @@
 #define PATHMAP_H
 
 #include <vector>
-#include "vertex.h"
+#include "vertex.hpp"
 
 class PathMap {
 public:
