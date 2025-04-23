@@ -37,3 +37,4 @@ If you encounter permission issues:
 1. Make the executable runnable: chmod +x ./build/boid_simulation
 
 Note: Make sure you have read/write permissions in the project directory.
+AI use is in the folder CGPT write ups in the writeup folder

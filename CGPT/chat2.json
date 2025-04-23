@@ -1,0 +1,2408 @@
+{
+  "requesterUsername": "Airtastik",
+  "requesterAvatarIconUri": {
+    "$mid": 1,
+    "path": "/u/58526333",
+    "scheme": "https",
+    "authority": "avatars.githubusercontent.com",
+    "query": "v=4"
+  },
+  "responderUsername": "GitHub Copilot",
+  "responderAvatarIconUri": {
+    "id": "copilot"
+  },
+  "initialLocation": "panel",
+  "requests": [
+    {
+      "requestId": "request_83df99c5-0b70-4895-8186-285f520956d5",
+      "message": {
+        "text": "condense this down to 400 words\r\nBehavior Tree Implementation for EnemyBoid\r\nThe behavior tree for the EnemyBoid is implemented using a hierarchical structure of nodes. These nodes determine the behavior of the enemy based on conditions and actions. The tree is built in the buildBehaviorTree method, and the root node is used to evaluate the current situation and decide the appropriate action.\r\n\r\nBoid Decision Tree Architecture\r\nOverview\r\nThe boid's decision-making system employs a binary decision tree that prioritizes survival through evasive maneuvers while maintaining goal-directed pathfinding behavior.\r\n\r\nTree Structure\r\nKey Components\r\nEnemy Detection Node\r\n\r\nPrimary decision point\r\nDetection radius: 200 units\r\nUses distance-based check\r\nBinary outcome determines high-level strategy\r\nEvasive Behaviors\r\n\r\nImplements three distinct evasion patterns\r\nRandom selection for unpredictability\r\nEach behavior optimized for different situations\r\nTemporal variations in execution\r\nNormal Pathfinding\r\n\r\nDefault behavior when safe\r\nUses arrive steering\r\nFollows predetermined waypoints\r\nIncludes obstacle avoidance\r\n\r\nNodes in the Behavior Tree\r\n1. Action Nodes\r\nAction nodes are leaf nodes in the behavior tree. They perform specific actions when executed. The following action nodes are implemented:\r\n\r\nSpin Action (spinAction):\r\n\r\nSpins the enemy in place by rotating its shape.\r\nReturns a zero vector (sf::Vector2f(0, 0)) to indicate no movement.\r\nImplementation:\r\nGo to Center Action (goToCenterAction):\r\n\r\nMoves the enemy toward the center of the window (assumed to be at (500, 500)).\r\nReturns a vector representing the acceleration needed to move toward the center.\r\nImplementation:\r\nAvoid Wall Action (avoidWallAction):\r\n\r\nChecks if the enemy is near a wall and calculates a perpendicular movement to avoid it.\r\nReturns a vector representing the acceleration needed to avoid the wall.\r\nImplementation:\r\nChase Boid Action (chaseBoidAction):\r\n\r\nMoves the enemy toward the boid by calculating the direction to the boid and applying acceleration.\r\nReturns a vector representing the acceleration needed to chase the boid.\r\nImplementation:\r\n2. Condition Nodes\r\nCondition nodes are composite nodes that evaluate a condition and decide which child node to execute based on the result.\r\n\r\nWall Ahead Condition:\r\nChecks if a wall is ahead by using the avoidWall method.\r\nIf a wall is ahead, it executes the avoidWallAction. Otherwise, it executes the chaseBoidAction.\r\nImplementation:\r\nHow the Behavior Tree Works\r\nRoot Node:\r\n\r\nThe root node is a ConditionNode that checks if a wall is ahead.\r\nIf a wall is detected, the avoidWallAction is executed to steer the enemy away from the wall.\r\nIf no wall is detected, the chaseBoidAction is executed to move the enemy toward the boid.\r\nAction Execution:\r\n\r\nEach action node performs a specific behavior, such as spinning in place, moving to the center, avoiding walls, or chasing the boid.\r\nBehavior Evaluation:\r\n\r\nThe update method calls the makeDecision method on the root node, which evaluates the behavior tree and determines the appropriate action based on the current state.\r\nBehavior Tree Flow\r\nWall Detection:\r\n\r\nThe root node checks if a wall is ahead using the avoidWall method.\r\nIf a wall is detected, the enemy avoids it by executing the avoidWallAction.\r\nChasing the Boid:\r\n\r\nIf no wall is detected, the enemy chases the boid by executing the chaseBoidAction.\r\nSpinning in Place:\r\n\r\nAlthough the spinAction is defined, it is not currently used in the behavior tree. It can be added as part of a more complex behavior tree structure.\r\nFuture Improvements\r\nTo make the behavior tree more robust and meet the requirement of having at least three types of composite nodes, you can:\r\n\r\nAdd a Sequence Node:\r\n\r\nCombine multiple actions (e.g., avoid walls and then chase the boid) into a sequence.\r\nAdd a Selector Node:\r\n\r\nCombine multiple conditions (e.g., check if the boid has reached the goal or if a wall is ahead) into a selector.\r\nAdd a Decorator Node:\r\n\r\nModify the behavior of an action or condition (e.g., invert the result of a condition).\r\nSummary\r\nThe behavior tree for the EnemyBoid is implemented with the following nodes:\r\n\r\nAction Nodes: Perform specific actions like spinning, moving to the center, avoiding walls, and chasing the boid.\r\nCondition Nodes: Evaluate conditions like whether a wall is ahead and decide which action to execute.\r\nThe behavior tree is simple but effective, allowing the enemy to dynamically decide its actions based on the environment. Future enhancements can include additional composite nodes to make the behavior more complex and flexible. Let me know if you'd like help implementing these improvements!\r\n\r\nPart 3:\r\nFor the\r\nHere's a detailed description of the behavior tree nodes and their purposes:\r\n\r\nBase Node Types\r\nDecisionNode (Abstract Base Class)\r\nProvides common interface for all nodes\r\nReturns steering vector for behavior execution\r\nComposite Nodes\r\nSequenceNode\r\nPurpose:\r\n\r\nUsed for behaviors that require multiple steps\r\nAll children must succeed for sequence to succeed\r\nUsed in complex maneuvers like \"dodge enemy AND move to goal\"\r\nSelectorNode\r\nPurpose:\r\n\r\nProvides fallback behaviors\r\nUsed for decision making between alternatives\r\nExample: \"chase OR wander OR return to center\"\r\nDecorator Nodes\r\nInverterNode\r\nPurpose:\r\n\r\nCreates NOT conditions\r\nUsed to invert behavior conditions\r\nExample: \"NOT near wall\"\r\nRandomNode\r\nPurpose:\r\n\r\nAdds non-deterministic behavior\r\nMakes enemy less predictable\r\nUsed for varying tactics\r\nRepeaterNode\r\nPurpose:\r\n\r\nCreates persistent behaviors\r\nUsed for sustained actions\r\nExample: \"Continue chasing for X updates\"\r\nAction Nodes\r\nActionNode\r\nPurpose:\r\n\r\nPerforms actual steering behaviors\r\nExamples: chase, flee, wander\r\nEnemyAvoidanceNode\r\nPurpose:\r\n\r\nHandles collision avoidance\r\nCalculates safe paths around obstacles\r\nTree Structure\r\nThis structure creates intelligent behavior where the boid:\r\n\r\nPrioritizes survival (enemy avoidance)\r\nUses random tactics when threatened\r\nFalls back to normal pathfinding when safe\r\nAlways maintains obstacle avoidance\r\n",
+        "parts": [
+          {
+            "range": {
+              "start": 0,
+              "endExclusive": 6117
+            },
+            "editorRange": {
+              "startLineNumber": 1,
+              "startColumn": 1,
+              "endLineNumber": 161,
+              "endColumn": 1
+            },
+            "text": "condense this down to 400 words\r\nBehavior Tree Implementation for EnemyBoid\r\nThe behavior tree for the EnemyBoid is implemented using a hierarchical structure of nodes. These nodes determine the behavior of the enemy based on conditions and actions. The tree is built in the buildBehaviorTree method, and the root node is used to evaluate the current situation and decide the appropriate action.\r\n\r\nBoid Decision Tree Architecture\r\nOverview\r\nThe boid's decision-making system employs a binary decision tree that prioritizes survival through evasive maneuvers while maintaining goal-directed pathfinding behavior.\r\n\r\nTree Structure\r\nKey Components\r\nEnemy Detection Node\r\n\r\nPrimary decision point\r\nDetection radius: 200 units\r\nUses distance-based check\r\nBinary outcome determines high-level strategy\r\nEvasive Behaviors\r\n\r\nImplements three distinct evasion patterns\r\nRandom selection for unpredictability\r\nEach behavior optimized for different situations\r\nTemporal variations in execution\r\nNormal Pathfinding\r\n\r\nDefault behavior when safe\r\nUses arrive steering\r\nFollows predetermined waypoints\r\nIncludes obstacle avoidance\r\n\r\nNodes in the Behavior Tree\r\n1. Action Nodes\r\nAction nodes are leaf nodes in the behavior tree. They perform specific actions when executed. The following action nodes are implemented:\r\n\r\nSpin Action (spinAction):\r\n\r\nSpins the enemy in place by rotating its shape.\r\nReturns a zero vector (sf::Vector2f(0, 0)) to indicate no movement.\r\nImplementation:\r\nGo to Center Action (goToCenterAction):\r\n\r\nMoves the enemy toward the center of the window (assumed to be at (500, 500)).\r\nReturns a vector representing the acceleration needed to move toward the center.\r\nImplementation:\r\nAvoid Wall Action (avoidWallAction):\r\n\r\nChecks if the enemy is near a wall and calculates a perpendicular movement to avoid it.\r\nReturns a vector representing the acceleration needed to avoid the wall.\r\nImplementation:\r\nChase Boid Action (chaseBoidAction):\r\n\r\nMoves the enemy toward the boid by calculating the direction to the boid and applying acceleration.\r\nReturns a vector representing the acceleration needed to chase the boid.\r\nImplementation:\r\n2. Condition Nodes\r\nCondition nodes are composite nodes that evaluate a condition and decide which child node to execute based on the result.\r\n\r\nWall Ahead Condition:\r\nChecks if a wall is ahead by using the avoidWall method.\r\nIf a wall is ahead, it executes the avoidWallAction. Otherwise, it executes the chaseBoidAction.\r\nImplementation:\r\nHow the Behavior Tree Works\r\nRoot Node:\r\n\r\nThe root node is a ConditionNode that checks if a wall is ahead.\r\nIf a wall is detected, the avoidWallAction is executed to steer the enemy away from the wall.\r\nIf no wall is detected, the chaseBoidAction is executed to move the enemy toward the boid.\r\nAction Execution:\r\n\r\nEach action node performs a specific behavior, such as spinning in place, moving to the center, avoiding walls, or chasing the boid.\r\nBehavior Evaluation:\r\n\r\nThe update method calls the makeDecision method on the root node, which evaluates the behavior tree and determines the appropriate action based on the current state.\r\nBehavior Tree Flow\r\nWall Detection:\r\n\r\nThe root node checks if a wall is ahead using the avoidWall method.\r\nIf a wall is detected, the enemy avoids it by executing the avoidWallAction.\r\nChasing the Boid:\r\n\r\nIf no wall is detected, the enemy chases the boid by executing the chaseBoidAction.\r\nSpinning in Place:\r\n\r\nAlthough the spinAction is defined, it is not currently used in the behavior tree. It can be added as part of a more complex behavior tree structure.\r\nFuture Improvements\r\nTo make the behavior tree more robust and meet the requirement of having at least three types of composite nodes, you can:\r\n\r\nAdd a Sequence Node:\r\n\r\nCombine multiple actions (e.g., avoid walls and then chase the boid) into a sequence.\r\nAdd a Selector Node:\r\n\r\nCombine multiple conditions (e.g., check if the boid has reached the goal or if a wall is ahead) into a selector.\r\nAdd a Decorator Node:\r\n\r\nModify the behavior of an action or condition (e.g., invert the result of a condition).\r\nSummary\r\nThe behavior tree for the EnemyBoid is implemented with the following nodes:\r\n\r\nAction Nodes: Perform specific actions like spinning, moving to the center, avoiding walls, and chasing the boid.\r\nCondition Nodes: Evaluate conditions like whether a wall is ahead and decide which action to execute.\r\nThe behavior tree is simple but effective, allowing the enemy to dynamically decide its actions based on the environment. Future enhancements can include additional composite nodes to make the behavior more complex and flexible. Let me know if you'd like help implementing these improvements!\r\n\r\nPart 3:\r\nFor the\r\nHere's a detailed description of the behavior tree nodes and their purposes:\r\n\r\nBase Node Types\r\nDecisionNode (Abstract Base Class)\r\nProvides common interface for all nodes\r\nReturns steering vector for behavior execution\r\nComposite Nodes\r\nSequenceNode\r\nPurpose:\r\n\r\nUsed for behaviors that require multiple steps\r\nAll children must succeed for sequence to succeed\r\nUsed in complex maneuvers like \"dodge enemy AND move to goal\"\r\nSelectorNode\r\nPurpose:\r\n\r\nProvides fallback behaviors\r\nUsed for decision making between alternatives\r\nExample: \"chase OR wander OR return to center\"\r\nDecorator Nodes\r\nInverterNode\r\nPurpose:\r\n\r\nCreates NOT conditions\r\nUsed to invert behavior conditions\r\nExample: \"NOT near wall\"\r\nRandomNode\r\nPurpose:\r\n\r\nAdds non-deterministic behavior\r\nMakes enemy less predictable\r\nUsed for varying tactics\r\nRepeaterNode\r\nPurpose:\r\n\r\nCreates persistent behaviors\r\nUsed for sustained actions\r\nExample: \"Continue chasing for X updates\"\r\nAction Nodes\r\nActionNode\r\nPurpose:\r\n\r\nPerforms actual steering behaviors\r\nExamples: chase, flee, wander\r\nEnemyAvoidanceNode\r\nPurpose:\r\n\r\nHandles collision avoidance\r\nCalculates safe paths around obstacles\r\nTree Structure\r\nThis structure creates intelligent behavior where the boid:\r\n\r\nPrioritizes survival (enemy avoidance)\r\nUses random tactics when threatened\r\nFalls back to normal pathfinding when safe\r\nAlways maintains obstacle avoidance\r\n",
+            "kind": "text"
+          }
+        ]
+      },
+      "variableData": {
+        "variables": [
+          {
+            "id": "vscode.implicit.viewport",
+            "name": "file:boid.cpp",
+            "value": {
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "scheme": "file"
+              },
+              "range": {
+                "startLineNumber": 234,
+                "startColumn": 1,
+                "endLineNumber": 244,
+                "endColumn": 2
+              }
+            },
+            "isFile": true,
+            "modelDescription": "User's current visible code"
+          }
+        ]
+      },
+      "response": [
+        {
+          "value": "Here's a 400-word condensed version of the Behavior Tree Implementation:\n\n# Boid Behavior Tree System\n\n## Core Structure\nThe behavior system uses a binary decision tree with two main behaviors:\n- **Evasive** (when enemy detected)\n- **Normal** (default pathfinding)\n\n### Key Components\n\n#### 1. Decision Node\n```cpp\nclass DecisionNode {\n    virtual sf::Vector2f makeDecision(const Kinematic& current,\n                                    const Kinematic& target,\n                                    const Kinematic& enemy,\n                                    const std::vector<std::vector<int>>& map,\n                                    int tileSize) = 0;\n};\n```\n\n#### 2. Primary Decision Branch\n- Enemy detection radius: 200 units\n- Evaluates distance to enemy\n- Chooses between evasive or normal behavior\n\n#### 3. Evasive Actions\nThree randomized maneuvers:\n```cpp\nsf::Vector2f randomFlank();\nsf::Vector2f randomDodge(); \nsf::Vector2f randomBurst();\n```\n\n#### 4. Normal Pathfinding\n- Uses arrive steering behavior\n- Includes obstacle avoidance\n- Follows waypoints\n\n## Implementation Details\n\n### Tree Construction\n```cpp\nvoid boid::buildDecisionTree() {\n    // Create evasive node with random tactics\n    auto evasiveNode = new ActionNode([this](/*params*/) {\n        int choice = rand() % 3;\n        switch(choice) {\n            case 0: return randomFlank();\n            case 1: return randomDodge();\n            case 2: return randomBurst();\n        }\n    });\n\n    // Create normal pathfinding node\n    auto normalNode = new ActionNode([this](/*params*/) {\n        return arrive->calculate(k, t);\n    });\n\n    // Build decision tree\n    decisionTree = new DecisionBranch(\n        [](/*params*/) { return enemyDistance < DETECTION_RADIUS; },\n        evasiveNode,  // True branch\n        normalNode    // False branch\n    );\n}\n```\n\n### Key Features\n- **Exception handling** for robustness\n- **Boundary checks** prevent out-of-bounds\n- **Speed limiting** for realistic movement\n- **Obstacle avoidance** via map data\n\n### Usage\nThe tree is evaluated each update:\n```cpp\nsf::Vector2f steering = decisionTree->makeDecision(\n    kinematic, targetKin, enemyKin, mapData, tileSize\n);\n```\n\nThis produces intelligent behavior where boids:\n1. Detect nearby enemies\n2. Choose appropriate evasive tactics\n3. Return to normal pathfinding when safe\n4. Maintain obstacle avoidance throughout",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        }
+      ],
+      "responseId": "response_7e2d4b85-12f1-433e-8fef-7380f014fb59",
+      "result": {
+        "timings": {
+          "firstProgress": 8556,
+          "totalElapsed": 19594
+        },
+        "metadata": {
+          "codeBlocks": [
+            {
+              "code": "class DecisionNode {\n    virtual sf::Vector2f makeDecision(const Kinematic& current,\n                                    const Kinematic& target,\n                                    const Kinematic& enemy,\n                                    const std::vector<std::vector<int>>& map,\n                                    int tileSize) = 0;\n};\n",
+              "language": "cpp",
+              "markdownBeforeBlock": "Here's a 400-word condensed version of the Behavior Tree Implementation:\n\n# Boid Behavior Tree System\n\n## Core Structure\nThe behavior system uses a binary decision tree with two main behaviors:\n- **Evasive** (when enemy detected)\n- **Normal** (default pathfinding)\n\n### Key Components\n\n#### 1. Decision Node\n"
+            },
+            {
+              "code": "sf::Vector2f randomFlank();\nsf::Vector2f randomDodge(); \nsf::Vector2f randomBurst();\n",
+              "language": "cpp",
+              "markdownBeforeBlock": "\n#### 2. Primary Decision Branch\n- Enemy detection radius: 200 units\n- Evaluates distance to enemy\n- Chooses between evasive or normal behavior\n\n#### 3. Evasive Actions\nThree randomized maneuvers:\n"
+            },
+            {
+              "code": "void boid::buildDecisionTree() {\n    // Create evasive node with random tactics\n    auto evasiveNode = new ActionNode([this](/*params*/) {\n        int choice = rand() % 3;\n        switch(choice) {\n            case 0: return randomFlank();\n            case 1: return randomDodge();\n            case 2: return randomBurst();\n        }\n    });\n\n    // Create normal pathfinding node\n    auto normalNode = new ActionNode([this](/*params*/) {\n        return arrive->calculate(k, t);\n    });\n\n    // Build decision tree\n    decisionTree = new DecisionBranch(\n        [](/*params*/) { return enemyDistance < DETECTION_RADIUS; },\n        evasiveNode,  // True branch\n        normalNode    // False branch\n    );\n}\n",
+              "language": "cpp",
+              "markdownBeforeBlock": "\n#### 4. Normal Pathfinding\n- Uses arrive steering behavior\n- Includes obstacle avoidance\n- Follows waypoints\n\n## Implementation Details\n\n### Tree Construction\n"
+            },
+            {
+              "code": "sf::Vector2f steering = decisionTree->makeDecision(\n    kinematic, targetKin, enemyKin, mapData, tileSize\n);\n",
+              "language": "cpp",
+              "markdownBeforeBlock": "\n### Key Features\n- **Exception handling** for robustness\n- **Boundary checks** prevent out-of-bounds\n- **Speed limiting** for realistic movement\n- **Obstacle avoidance** via map data\n\n### Usage\nThe tree is evaluated each update:\n"
+            }
+          ],
+          "messages": [
+            {
+              "role": "user",
+              "content": "condense this down to 400 words\r\nBehavior Tree Implementation for EnemyBoid\r\nThe behavior tree for the EnemyBoid is implemented using a hierarchical structure of nodes. These nodes determine the behavior of the enemy based on conditions and actions. The tree is built in the buildBehaviorTree method, and the root node is used to evaluate the current situation and decide the appropriate action.\r\n\r\nBoid Decision Tree Architecture\r\nOverview\r\nThe boid's decision-making system employs a binary decision tree that prioritizes survival through evasive maneuvers while maintaining goal-directed pathfinding behavior.\r\n\r\nTree Structure\r\nKey Components\r\nEnemy Detection Node\r\n\r\nPrimary decision point\r\nDetection radius: 200 units\r\nUses distance-based check\r\nBinary outcome determines high-level strategy\r\nEvasive Behaviors\r\n\r\nImplements three distinct evasion patterns\r\nRandom selection for unpredictability\r\nEach behavior optimized for different situations\r\nTemporal variations in execution\r\nNormal Pathfinding\r\n\r\nDefault behavior when safe\r\nUses arrive steering\r\nFollows predetermined waypoints\r\nIncludes obstacle avoidance\r\n\r\nNodes in the Behavior Tree\r\n1. Action Nodes\r\nAction nodes are leaf nodes in the behavior tree. They perform specific actions when executed. The following action nodes are implemented:\r\n\r\nSpin Action (spinAction):\r\n\r\nSpins the enemy in place by rotating its shape.\r\nReturns a zero vector (sf::Vector2f(0, 0)) to indicate no movement.\r\nImplementation:\r\nGo to Center Action (goToCenterAction):\r\n\r\nMoves the enemy toward the center of the window (assumed to be at (500, 500)).\r\nReturns a vector representing the acceleration needed to move toward the center.\r\nImplementation:\r\nAvoid Wall Action (avoidWallAction):\r\n\r\nChecks if the enemy is near a wall and calculates a perpendicular movement to avoid it.\r\nReturns a vector representing the acceleration needed to avoid the wall.\r\nImplementation:\r\nChase Boid Action (chaseBoidAction):\r\n\r\nMoves the enemy toward the boid by calculating the direction to the boid and applying acceleration.\r\nReturns a vector representing the acceleration needed to chase the boid.\r\nImplementation:\r\n2. Condition Nodes\r\nCondition nodes are composite nodes that evaluate a condition and decide which child node to execute based on the result.\r\n\r\nWall Ahead Condition:\r\nChecks if a wall is ahead by using the avoidWall method.\r\nIf a wall is ahead, it executes the avoidWallAction. Otherwise, it executes the chaseBoidAction.\r\nImplementation:\r\nHow the Behavior Tree Works\r\nRoot Node:\r\n\r\nThe root node is a ConditionNode that checks if a wall is ahead.\r\nIf a wall is detected, the avoidWallAction is executed to steer the enemy away from the wall.\r\nIf no wall is detected, the chaseBoidAction is executed to move the enemy toward the boid.\r\nAction Execution:\r\n\r\nEach action node performs a specific behavior, such as spinning in place, moving to the center, avoiding walls, or chasing the boid.\r\nBehavior Evaluation:\r\n\r\nThe update method calls the makeDecision method on the root node, which evaluates the behavior tree and determines the appropriate action based on the current state.\r\nBehavior Tree Flow\r\nWall Detection:\r\n\r\nThe root node checks if a wall is ahead using the avoidWall method.\r\nIf a wall is detected, the enemy avoids it by executing the avoidWallAction.\r\nChasing the Boid:\r\n\r\nIf no wall is detected, the enemy chases the boid by executing the chaseBoidAction.\r\nSpinning in Place:\r\n\r\nAlthough the spinAction is defined, it is not currently used in the behavior tree. It can be added as part of a more complex behavior tree structure.\r\nFuture Improvements\r\nTo make the behavior tree more robust and meet the requirement of having at least three types of composite nodes, you can:\r\n\r\nAdd a Sequence Node:\r\n\r\nCombine multiple actions (e.g., avoid walls and then chase the boid) into a sequence.\r\nAdd a Selector Node:\r\n\r\nCombine multiple conditions (e.g., check if the boid has reached the goal or if a wall is ahead) into a selector.\r\nAdd a Decorator Node:\r\n\r\nModify the behavior of an action or condition (e.g., invert the result of a condition).\r\nSummary\r\nThe behavior tree for the EnemyBoid is implemented with the following nodes:\r\n\r\nAction Nodes: Perform specific actions like spinning, moving to the center, avoiding walls, and chasing the boid.\r\nCondition Nodes: Evaluate conditions like whether a wall is ahead and decide which action to execute.\r\nThe behavior tree is simple but effective, allowing the enemy to dynamically decide its actions based on the environment. Future enhancements can include additional composite nodes to make the behavior more complex and flexible. Let me know if you'd like help implementing these improvements!\r\n\r\nPart 3:\r\nFor the\r\nHere's a detailed description of the behavior tree nodes and their purposes:\r\n\r\nBase Node Types\r\nDecisionNode (Abstract Base Class)\r\nProvides common interface for all nodes\r\nReturns steering vector for behavior execution\r\nComposite Nodes\r\nSequenceNode\r\nPurpose:\r\n\r\nUsed for behaviors that require multiple steps\r\nAll children must succeed for sequence to succeed\r\nUsed in complex maneuvers like \"dodge enemy AND move to goal\"\r\nSelectorNode\r\nPurpose:\r\n\r\nProvides fallback behaviors\r\nUsed for decision making between alternatives\r\nExample: \"chase OR wander OR return to center\"\r\nDecorator Nodes\r\nInverterNode\r\nPurpose:\r\n\r\nCreates NOT conditions\r\nUsed to invert behavior conditions\r\nExample: \"NOT near wall\"\r\nRandomNode\r\nPurpose:\r\n\r\nAdds non-deterministic behavior\r\nMakes enemy less predictable\r\nUsed for varying tactics\r\nRepeaterNode\r\nPurpose:\r\n\r\nCreates persistent behaviors\r\nUsed for sustained actions\r\nExample: \"Continue chasing for X updates\"\r\nAction Nodes\r\nActionNode\r\nPurpose:\r\n\r\nPerforms actual steering behaviors\r\nExamples: chase, flee, wander\r\nEnemyAvoidanceNode\r\nPurpose:\r\n\r\nHandles collision avoidance\r\nCalculates safe paths around obstacles\r\nTree Structure\r\nThis structure creates intelligent behavior where the boid:\r\n\r\nPrioritizes survival (enemy avoidance)\r\nUses random tactics when threatened\r\nFalls back to normal pathfinding when safe\r\nAlways maintains obstacle avoidance\r\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Here's a 400-word condensed version of the Behavior Tree Implementation:\n\n# Boid Behavior Tree System\n\n## Core Structure\nThe behavior system uses a binary decision tree with two main behaviors:\n- **Evasive** (when enemy detected)\n- **Normal** (default pathfinding)\n\n### Key Components\n\n#### 1. Decision Node\n```cpp\nclass DecisionNode {\n    virtual sf::Vector2f makeDecision(const Kinematic& current,\n                                    const Kinematic& target,\n                                    const Kinematic& enemy,\n                                    const std::vector<std::vector<int>>& map,\n                                    int tileSize) = 0;\n};\n```\n\n#### 2. Primary Decision Branch\n- Enemy detection radius: 200 units\n- Evaluates distance to enemy\n- Chooses between evasive or normal behavior\n\n#### 3. Evasive Actions\nThree randomized maneuvers:\n```cpp\nsf::Vector2f randomFlank();\nsf::Vector2f randomDodge(); \nsf::Vector2f randomBurst();\n```\n\n#### 4. Normal Pathfinding\n- Uses arrive steering behavior\n- Includes obstacle avoidance\n- Follows waypoints\n\n## Implementation Details\n\n### Tree Construction\n```cpp\nvoid boid::buildDecisionTree() {\n    // Create evasive node with random tactics\n    auto evasiveNode = new ActionNode([this](/*params*/) {\n        int choice = rand() % 3;\n        switch(choice) {\n            case 0: return randomFlank();\n            case 1: return randomDodge();\n            case 2: return randomBurst();\n        }\n    });\n\n    // Create normal pathfinding node\n    auto normalNode = new ActionNode([this](/*params*/) {\n        return arrive->calculate(k, t);\n    });\n\n    // Build decision tree\n    decisionTree = new DecisionBranch(\n        [](/*params*/) { return enemyDistance < DETECTION_RADIUS; },\n        evasiveNode,  // True branch\n        normalNode    // False branch\n    );\n}\n```\n\n### Key Features\n- **Exception handling** for robustness\n- **Boundary checks** prevent out-of-bounds\n- **Speed limiting** for realistic movement\n- **Obstacle avoidance** via map data\n\n### Usage\nThe tree is evaluated each update:\n```cpp\nsf::Vector2f steering = decisionTree->makeDecision(\n    kinematic, targetKin, enemyKin, mapData, tileSize\n);\n```\n\nThis produces intelligent behavior where boids:\n1. Detect nearby enemies\n2. Choose appropriate evasive tactics\n3. Return to normal pathfinding when safe\n4. Maintain obstacle avoidance throughout"
+            }
+          ],
+          "modelMessageId": "7a32a08a-ebc7-4e54-9de2-ecfb40c80520",
+          "responseId": "40c57863-eea8-40e4-99e5-2d9046a465aa",
+          "sessionId": "cc99d242-82bd-4ad8-b145-0a7e65a16bee",
+          "agentId": "github.copilot.default"
+        }
+      },
+      "followups": [
+        {
+          "kind": "reply",
+          "agentId": "github.copilot.default",
+          "message": "What are the next steps?"
+        }
+      ],
+      "isCanceled": false,
+      "agent": {
+        "extensionId": {
+          "value": "GitHub.copilot-chat",
+          "_lower": "github.copilot-chat"
+        },
+        "publisherDisplayName": "GitHub",
+        "extensionPublisherId": "GitHub",
+        "extensionDisplayName": "GitHub Copilot Chat",
+        "id": "github.copilot.default",
+        "description": "Ask Copilot",
+        "metadata": {
+          "themeIcon": {
+            "id": "copilot"
+          },
+          "hasFollowups": true,
+          "helpTextPrefix": "You can ask me general programming questions, or chat with the following participants which have specialized expertise and can perform actions:",
+          "helpTextVariablesPrefix": "You can also help me understand your question by using the following variables to give me extra context:",
+          "helpTextPostfix": {
+            "value": "To have a great conversation, ask me questions as if I was a real programmer:\n\n* **Show me the code** you want to talk about by having the files open and selecting the most important lines.\n* **Make refinements** by asking me follow-up questions, adding clarifications, providing errors, etc.\n* **Review my suggested code** and tell me about issues or improvements, so I can iterate on it.\n\nYou can also ask me questions about your editor selection by [starting an inline chat session](command:inlineChat.start).\n\nLearn more about [GitHub Copilot](https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted) in [Visual Studio Code](https://code.visualstudio.com/docs/copilot/overview). Or explore the [Copilot walkthrough](command:github.copilot.open.walkthrough).",
+            "isTrusted": {
+              "enabledCommands": [
+                "inlineChat.start",
+                "github.copilot.open.walkthrough"
+              ]
+            },
+            "supportThemeIcons": false,
+            "supportHtml": false,
+            "uris": {
+              "command:inlineChat.start": {
+                "$mid": 1,
+                "path": "inlineChat.start",
+                "scheme": "command"
+              },
+              "https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted": {
+                "$mid": 1,
+                "path": "/copilot/using-github-copilot/getting-started-with-github-copilot",
+                "scheme": "https",
+                "authority": "docs.github.com",
+                "query": "tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted"
+              },
+              "https://code.visualstudio.com/docs/copilot/overview": {
+                "$mid": 1,
+                "path": "/docs/copilot/overview",
+                "scheme": "https",
+                "authority": "code.visualstudio.com"
+              },
+              "command:github.copilot.open.walkthrough": {
+                "$mid": 1,
+                "path": "github.copilot.open.walkthrough",
+                "scheme": "command"
+              }
+            }
+          },
+          "supportIssueReporting": false,
+          "welcomeMessageContent": {
+            "icon": {
+              "id": "copilot-large"
+            },
+            "title": "Ask Copilot",
+            "message": {
+              "value": "Copilot is powered by AI, so mistakes are possible. Review output carefully before use.",
+              "supportThemeIcons": false,
+              "supportHtml": false,
+              "uris": {}
+            }
+          },
+          "requester": {
+            "name": "Airtastik",
+            "icon": {
+              "$mid": 1,
+              "path": "/u/58526333",
+              "scheme": "https",
+              "authority": "avatars.githubusercontent.com",
+              "query": "v=4"
+            }
+          }
+        },
+        "name": "GitHubCopilot",
+        "fullName": "GitHub Copilot",
+        "isDefault": true,
+        "locations": [
+          "panel"
+        ],
+        "slashCommands": [],
+        "disambiguation": [
+          {
+            "category": "generate_code_sample",
+            "description": "The user wants to generate code snippets without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Write an example of computing a SHA256 hash."
+            ]
+          },
+          {
+            "category": "add_feature_to_file",
+            "description": "The user wants to change code in a file that is provided in their request, without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Add a refresh button to the table widget."
+            ]
+          },
+          {
+            "category": "question_about_specific_files",
+            "description": "The user has a question about a specific file or code snippet that they have provided as part of their query, and the question does not require additional workspace context to answer.",
+            "examples": [
+              "What does this file do?"
+            ]
+          }
+        ]
+      },
+      "contentReferences": [
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "scheme": "file"
+          }
+        }
+      ],
+      "codeCitations": [],
+      "timestamp": 1745426002249
+    },
+    {
+      "requestId": "request_8097901e-ea1c-48ee-accf-e2ddeda21f31",
+      "message": {
+        "text": "describe the behavior tree of boid, the behavior tree for the enemy with its compisite nodes,and the learning tree. in text",
+        "parts": [
+          {
+            "range": {
+              "start": 0,
+              "endExclusive": 123
+            },
+            "editorRange": {
+              "startLineNumber": 1,
+              "startColumn": 1,
+              "endLineNumber": 1,
+              "endColumn": 124
+            },
+            "text": "describe the behavior tree of boid, the behavior tree for the enemy with its compisite nodes,and the learning tree. in text",
+            "kind": "text"
+          }
+        ]
+      },
+      "variableData": {
+        "variables": [
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/main.cpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\main.cpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/main.cpp",
+              "path": "/C:/Users/Trist/Documents/GitHub/GAIHW2/src/main.cpp",
+              "scheme": "file"
+            },
+            "name": "main.cpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/utils.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\utils.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/utils.hpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/utils.hpp",
+              "scheme": "file"
+            },
+            "name": "utils.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/run_data.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\run_data.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/run_data.hpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/run_data.hpp",
+              "scheme": "file"
+            },
+            "name": "run_data.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/learning_enemy.cpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\learning_enemy.cpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/learning_enemy.cpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/learning_enemy.cpp",
+              "scheme": "file"
+            },
+            "name": "learning_enemy.cpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/learned_behavior.cpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\learned_behavior.cpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/learned_behavior.cpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/learned_behavior.cpp",
+              "scheme": "file"
+            },
+            "name": "learned_behavior.cpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/learning_enemy.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\learning_enemy.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/learning_enemy.hpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/learning_enemy.hpp",
+              "scheme": "file"
+            },
+            "name": "learning_enemy.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/learned_behavior.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\learned_behavior.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/learned_behavior.hpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/learned_behavior.hpp",
+              "scheme": "file"
+            },
+            "name": "learned_behavior.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/pathMap.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\pathMap.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/pathMap.hpp",
+              "path": "/C:/Users/Trist/Documents/GitHub/GAIHW2/include/pathMap.hpp",
+              "scheme": "file"
+            },
+            "name": "pathMap.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+              "scheme": "file"
+            },
+            "name": "boid.cpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/game_constants.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\game_constants.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/game_constants.hpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/game_constants.hpp",
+              "scheme": "file"
+            },
+            "name": "game_constants.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/boid.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\boid.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/boid.hpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/boid.hpp",
+              "scheme": "file"
+            },
+            "name": "boid.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/PATHFIND.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\PATHFIND.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/PATHFIND.hpp",
+              "path": "/C:/Users/Trist/Documents/GitHub/GAIHW2/include/PATHFIND.hpp",
+              "scheme": "file"
+            },
+            "name": "PATHFIND.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/steering.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\steering.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/steering.hpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/steering.hpp",
+              "scheme": "file"
+            },
+            "name": "steering.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/vertex.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\vertex.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/vertex.hpp",
+              "path": "/C:/Users/Trist/Documents/GitHub/GAIHW2/include/vertex.hpp",
+              "scheme": "file"
+            },
+            "name": "vertex.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/enemy_boid.cpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\enemy_boid.cpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/enemy_boid.cpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/enemy_boid.cpp",
+              "scheme": "file"
+            },
+            "name": "enemy_boid.cpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+              "scheme": "file"
+            },
+            "name": "behavior_tree.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/enemy_boid.hpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\enemy_boid.hpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/enemy_boid.hpp",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/enemy_boid.hpp",
+              "scheme": "file"
+            },
+            "name": "enemy_boid.hpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/path.cpp",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\path.cpp",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/path.cpp",
+              "path": "/C:/Users/Trist/Documents/GitHub/GAIHW2/src/path.cpp",
+              "scheme": "file"
+            },
+            "name": "path.cpp",
+            "isFile": true
+          },
+          {
+            "id": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+            "value": {
+              "$mid": 1,
+              "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\CMakeLists.txt",
+              "_sep": 1,
+              "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+              "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+              "scheme": "file"
+            },
+            "name": "CMakeLists.txt",
+            "isFile": true
+          },
+          {
+            "id": "vscode.implicit.viewport",
+            "name": "file:boid.cpp",
+            "value": {
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "scheme": "file"
+              },
+              "range": {
+                "startLineNumber": 234,
+                "startColumn": 1,
+                "endLineNumber": 244,
+                "endColumn": 2
+              }
+            },
+            "isFile": true,
+            "modelDescription": "User's current visible code"
+          }
+        ]
+      },
+      "response": [
+        {
+          "value": "### Behavior Tree of Boid\nThe **boid's behavior tree** is designed to handle decision-making for pathfinding and evasion. It uses a hierarchical structure of nodes to evaluate conditions and execute actions dynamically.\n\n1. **Structure**:\n   - **Root Node**: A ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "DecisionBranch",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 96,
+                "startColumn": 7,
+                "endLineNumber": 96,
+                "endColumn": 7
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "f9abb2bd-2a18-43c3-840c-7158fd4c96a7"
+        },
+        {
+          "value": " that checks if an enemy is within the detection radius (200 units).\n   - **True Branch**: Executes evasive maneuvers using an ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "ActionNode",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 126,
+                "startColumn": 7,
+                "endLineNumber": 126,
+                "endColumn": 7
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "381025fa-be38-424e-b999-27a1c8399e80"
+        },
+        {
+          "value": " that randomly selects one of three behaviors:\n     - **Random Flank**: Moves perpendicular to the enemy's direction.\n     - **Random Dodge**: Executes a random angular dodge.\n     - **Random Burst**: Temporarily accelerates in a random direction.\n   - **False Branch**: Executes normal pathfinding using an ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "ActionNode",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 126,
+                "startColumn": 7,
+                "endLineNumber": 126,
+                "endColumn": 7
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "361e9bce-e802-4938-bd70-59862ba6c6c8"
+        },
+        {
+          "value": " that calculates steering forces to follow waypoints.\n\n2. **Key Features**:\n   - Dynamically switches between evasion and pathfinding based on proximity to the enemy.\n   - Includes obstacle avoidance and boundary checks to ensure safe navigation.\n\n---\n\n### Behavior Tree of Enemy\nThe **enemy's behavior tree** is more complex, incorporating composite nodes to handle multiple conditions and actions.\n\n1. **Structure**:\n   - **Root Node**: A ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "DecisionBranch",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 96,
+                "startColumn": 7,
+                "endLineNumber": 96,
+                "endColumn": 7
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "ed317a60-23f8-49be-ad67-41333d53587d"
+        },
+        {
+          "value": " that checks if the boid is within the detection radius (500 units).\n     - **True Branch**: A ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "DecisionBranch",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 96,
+                "startColumn": 7,
+                "endLineNumber": 96,
+                "endColumn": 7
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "f822921f-d67d-41a1-8eeb-e649de06cc3a"
+        },
+        {
+          "value": " that checks if the enemy is near a wall.\n       - **True Branch**: Executes ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "avoidWallAction",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 159,
+                "startColumn": 10,
+                "endLineNumber": 159,
+                "endColumn": 10
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\enemy_boid.cpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/enemy_boid.cpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/enemy_boid.cpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "567050dd-cbd7-4a92-ad3d-6f635ad665fd"
+        },
+        {
+          "value": " to steer away from walls.\n       - **False Branch**: Executes ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "chaseBoidAction",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 152,
+                "startColumn": 10,
+                "endLineNumber": 152,
+                "endColumn": 10
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\enemy_boid.cpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/enemy_boid.cpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/enemy_boid.cpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "ee7fdfcf-4135-4605-8dec-aa6240d60a8e"
+        },
+        {
+          "value": " to pursue the boid.\n     - **False Branch**: Executes ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "wanderAction",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 145,
+                "startColumn": 10,
+                "endLineNumber": 145,
+                "endColumn": 10
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\enemy_boid.cpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/enemy_boid.cpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/enemy_boid.cpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "af91a918-15ea-447c-b9d4-cefa8b7ff815"
+        },
+        {
+          "value": " to move randomly when the boid is not nearby.\n\n2. **Composite Nodes**:\n   - **Selector Node**: Chooses between chasing the boid or wandering based on proximity.\n   - **Sequence Node**: Combines wall avoidance and chasing into a sequential behavior.\n\n3. **Key Features**:\n   - Prioritizes survival by avoiding walls.\n   - Aggressively pursues the boid when in range.\n   - Falls back to wandering when no target is detected.\n\n---\n\n### Learning Tree\nThe **learning tree** is a decision tree trained using recorded behaviors to predict actions based on environmental states.\n\n1. **Training**:\n   - Records samples of the enemy's state, the boid's state, and the map layout during gameplay.\n   - Each sample includes features like distance to the boid, angle to the boid, relative speed, and proximity to walls.\n   - Uses these samples to build a decision tree by splitting data based on feature thresholds.\n\n2. **Structure**:\n   - **Internal Nodes**: Evaluate conditions (e.g., \"Is distance to the boid < threshold?\").\n   - **Leaf Nodes**: Contain actions (e.g., \"Move toward the boid\" or \"Dodge\").\n\n3. **Key Features**:\n   - Predicts actions based on the current state by traversing the tree.\n   - Continuously improves through training, allowing the enemy to adapt to new scenarios.\n   - Balances between learned behaviors and predefined fallback actions.",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        }
+      ],
+      "responseId": "response_5e690116-087c-4816-8947-501964149bcc",
+      "result": {
+        "timings": {
+          "firstProgress": 3408,
+          "totalElapsed": 15441
+        },
+        "metadata": {
+          "codeBlocks": [],
+          "messages": [
+            {
+              "role": "user",
+              "content": "describe the behavior tree of boid, the behavior tree for the enemy with its compisite nodes,and the learning tree. in text"
+            },
+            {
+              "role": "assistant",
+              "content": "### Behavior Tree of Boid\nThe **boid's behavior tree** is designed to handle decision-making for pathfinding and evasion. It uses a hierarchical structure of nodes to evaluate conditions and execute actions dynamically.\n\n1. **Structure**:\n   - **Root Node**: A `DecisionBranch` that checks if an enemy is within the detection radius (200 units).\n   - **True Branch**: Executes evasive maneuvers using an `ActionNode` that randomly selects one of three behaviors:\n     - **Random Flank**: Moves perpendicular to the enemy's direction.\n     - **Random Dodge**: Executes a random angular dodge.\n     - **Random Burst**: Temporarily accelerates in a random direction.\n   - **False Branch**: Executes normal pathfinding using an `ActionNode` that calculates steering forces to follow waypoints.\n\n2. **Key Features**:\n   - Dynamically switches between evasion and pathfinding based on proximity to the enemy.\n   - Includes obstacle avoidance and boundary checks to ensure safe navigation.\n\n---\n\n### Behavior Tree of Enemy\nThe **enemy's behavior tree** is more complex, incorporating composite nodes to handle multiple conditions and actions.\n\n1. **Structure**:\n   - **Root Node**: A `DecisionBranch` that checks if the boid is within the detection radius (500 units).\n     - **True Branch**: A `DecisionBranch` that checks if the enemy is near a wall.\n       - **True Branch**: Executes `avoidWallAction` to steer away from walls.\n       - **False Branch**: Executes `chaseBoidAction` to pursue the boid.\n     - **False Branch**: Executes `wanderAction` to move randomly when the boid is not nearby.\n\n2. **Composite Nodes**:\n   - **Selector Node**: Chooses between chasing the boid or wandering based on proximity.\n   - **Sequence Node**: Combines wall avoidance and chasing into a sequential behavior.\n\n3. **Key Features**:\n   - Prioritizes survival by avoiding walls.\n   - Aggressively pursues the boid when in range.\n   - Falls back to wandering when no target is detected.\n\n---\n\n### Learning Tree\nThe **learning tree** is a decision tree trained using recorded behaviors to predict actions based on environmental states.\n\n1. **Training**:\n   - Records samples of the enemy's state, the boid's state, and the map layout during gameplay.\n   - Each sample includes features like distance to the boid, angle to the boid, relative speed, and proximity to walls.\n   - Uses these samples to build a decision tree by splitting data based on feature thresholds.\n\n2. **Structure**:\n   - **Internal Nodes**: Evaluate conditions (e.g., \"Is distance to the boid < threshold?\").\n   - **Leaf Nodes**: Contain actions (e.g., \"Move toward the boid\" or \"Dodge\").\n\n3. **Key Features**:\n   - Predicts actions based on the current state by traversing the tree.\n   - Continuously improves through training, allowing the enemy to adapt to new scenarios.\n   - Balances between learned behaviors and predefined fallback actions."
+            }
+          ],
+          "modelMessageId": "95a9bd2c-b7bd-4db2-9a2d-b83ee6eacd6f",
+          "responseId": "cf2f8078-dcaa-4f0f-96d5-d34f8616a029",
+          "sessionId": "cc99d242-82bd-4ad8-b145-0a7e65a16bee",
+          "agentId": "github.copilot.default"
+        }
+      },
+      "followups": [],
+      "isCanceled": false,
+      "agent": {
+        "extensionId": {
+          "value": "GitHub.copilot-chat",
+          "_lower": "github.copilot-chat"
+        },
+        "publisherDisplayName": "GitHub",
+        "extensionPublisherId": "GitHub",
+        "extensionDisplayName": "GitHub Copilot Chat",
+        "id": "github.copilot.default",
+        "description": "Ask Copilot",
+        "metadata": {
+          "themeIcon": {
+            "id": "copilot"
+          },
+          "hasFollowups": true,
+          "helpTextPrefix": "You can ask me general programming questions, or chat with the following participants which have specialized expertise and can perform actions:",
+          "helpTextVariablesPrefix": "You can also help me understand your question by using the following variables to give me extra context:",
+          "helpTextPostfix": {
+            "value": "To have a great conversation, ask me questions as if I was a real programmer:\n\n* **Show me the code** you want to talk about by having the files open and selecting the most important lines.\n* **Make refinements** by asking me follow-up questions, adding clarifications, providing errors, etc.\n* **Review my suggested code** and tell me about issues or improvements, so I can iterate on it.\n\nYou can also ask me questions about your editor selection by [starting an inline chat session](command:inlineChat.start).\n\nLearn more about [GitHub Copilot](https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted) in [Visual Studio Code](https://code.visualstudio.com/docs/copilot/overview). Or explore the [Copilot walkthrough](command:github.copilot.open.walkthrough).",
+            "isTrusted": {
+              "enabledCommands": [
+                "inlineChat.start",
+                "github.copilot.open.walkthrough"
+              ]
+            },
+            "supportThemeIcons": false,
+            "supportHtml": false,
+            "uris": {
+              "command:inlineChat.start": {
+                "$mid": 1,
+                "path": "inlineChat.start",
+                "scheme": "command"
+              },
+              "https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted": {
+                "$mid": 1,
+                "path": "/copilot/using-github-copilot/getting-started-with-github-copilot",
+                "scheme": "https",
+                "authority": "docs.github.com",
+                "query": "tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted"
+              },
+              "https://code.visualstudio.com/docs/copilot/overview": {
+                "$mid": 1,
+                "path": "/docs/copilot/overview",
+                "scheme": "https",
+                "authority": "code.visualstudio.com"
+              },
+              "command:github.copilot.open.walkthrough": {
+                "$mid": 1,
+                "path": "github.copilot.open.walkthrough",
+                "scheme": "command"
+              }
+            }
+          },
+          "supportIssueReporting": false,
+          "welcomeMessageContent": {
+            "icon": {
+              "id": "copilot-large"
+            },
+            "title": "Ask Copilot",
+            "message": {
+              "value": "Copilot is powered by AI, so mistakes are possible. Review output carefully before use.",
+              "supportThemeIcons": false,
+              "supportHtml": false,
+              "uris": {}
+            }
+          },
+          "requester": {
+            "name": "Airtastik",
+            "icon": {
+              "$mid": 1,
+              "path": "/u/58526333",
+              "scheme": "https",
+              "authority": "avatars.githubusercontent.com",
+              "query": "v=4"
+            }
+          }
+        },
+        "name": "GitHubCopilot",
+        "fullName": "GitHub Copilot",
+        "isDefault": true,
+        "locations": [
+          "panel"
+        ],
+        "slashCommands": [],
+        "disambiguation": [
+          {
+            "category": "generate_code_sample",
+            "description": "The user wants to generate code snippets without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Write an example of computing a SHA256 hash."
+            ]
+          },
+          {
+            "category": "add_feature_to_file",
+            "description": "The user wants to change code in a file that is provided in their request, without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Add a refresh button to the table widget."
+            ]
+          },
+          {
+            "category": "question_about_specific_files",
+            "description": "The user has a question about a specific file or code snippet that they have provided as part of their query, and the question does not require additional workspace context to answer.",
+            "examples": [
+              "What does this file do?"
+            ]
+          }
+        ]
+      },
+      "contentReferences": [
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\CMakeLists.txt",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+            "scheme": "file"
+          },
+          "options": {
+            "status": {
+              "description": "Part of this file was not sent to the model due to context window limitations. Try attaching specific selections from your file instead.",
+              "kind": 2
+            }
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\boid.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/boid.hpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/boid.hpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\enemy_boid.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/enemy_boid.hpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/enemy_boid.hpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\game_constants.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/game_constants.hpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/game_constants.hpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\learned_behavior.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/learned_behavior.hpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/learned_behavior.hpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\learning_enemy.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/learning_enemy.hpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/learning_enemy.hpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\PATHFIND.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/PATHFIND.hpp",
+            "path": "/C:/Users/Trist/Documents/GitHub/GAIHW2/include/PATHFIND.hpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\pathMap.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/pathMap.hpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/pathMap.hpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\run_data.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/run_data.hpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/run_data.hpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\steering.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/steering.hpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/steering.hpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\utils.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/utils.hpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/utils.hpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\vertex.hpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/vertex.hpp",
+            "path": "/C:/Users/Trist/Documents/GitHub/GAIHW2/include/vertex.hpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\enemy_boid.cpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/enemy_boid.cpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/enemy_boid.cpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\learned_behavior.cpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/learned_behavior.cpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/learned_behavior.cpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\learning_enemy.cpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/learning_enemy.cpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/learning_enemy.cpp",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\main.cpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/main.cpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/main.cpp",
+            "scheme": "file"
+          },
+          "options": {
+            "status": {
+              "description": "Part of this file was not sent to the model due to context window limitations. Try attaching specific selections from your file instead.",
+              "kind": 2
+            }
+          }
+        },
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\path.cpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/path.cpp",
+            "path": "/C:/Users/Trist/Documents/GitHub/GAIHW2/src/path.cpp",
+            "scheme": "file"
+          }
+        }
+      ],
+      "codeCitations": [],
+      "timestamp": 1745426143691
+    },
+    {
+      "requestId": "request_7eebe0c7-91d6-4a76-b975-7ba0f2d02373",
+      "message": {
+        "text": "expand it further",
+        "parts": [
+          {
+            "range": {
+              "start": 0,
+              "endExclusive": 17
+            },
+            "editorRange": {
+              "startLineNumber": 1,
+              "startColumn": 1,
+              "endLineNumber": 1,
+              "endColumn": 18
+            },
+            "text": "expand it further",
+            "kind": "text"
+          }
+        ]
+      },
+      "variableData": {
+        "variables": [
+          {
+            "id": "vscode.implicit.viewport",
+            "name": "file:boid.cpp",
+            "value": {
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "scheme": "file"
+              },
+              "range": {
+                "startLineNumber": 234,
+                "startColumn": 1,
+                "endLineNumber": 244,
+                "endColumn": 2
+              }
+            },
+            "isFile": true,
+            "modelDescription": "User's current visible code"
+          }
+        ]
+      },
+      "response": [
+        {
+          "value": "### Behavior Tree of Boid\nThe **boid's behavior tree** is designed to dynamically switch between pathfinding and evasive maneuvers based on the proximity of an enemy. It uses a hierarchical structure of nodes to evaluate conditions and execute actions.\n\n#### Structure:\n1. **Root Node**: A ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "DecisionBranch",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 104,
+                "startColumn": 9,
+                "endLineNumber": 104,
+                "endColumn": 9
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "a8c44349-08ca-4924-a919-68522e0199f1"
+        },
+        {
+          "value": " that evaluates whether an enemy is within the detection radius (200 units).\n   - **Condition**: Checks the distance between the boid and the enemy.\n   - **True Branch**: Executes evasive maneuvers using an ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "ActionNode",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 132,
+                "startColumn": 5,
+                "endLineNumber": 132,
+                "endColumn": 5
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "19076424-7966-4d28-85c8-6a7a98c331c4"
+        },
+        {
+          "value": ".\n   - **False Branch**: Executes normal pathfinding using another ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "ActionNode",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 132,
+                "startColumn": 5,
+                "endLineNumber": 132,
+                "endColumn": 5
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "e9a995f7-a97d-42b2-a0b5-4a71f03fd4e5"
+        },
+        {
+          "value": ".\n\n2. **Evasive Maneuvers**:\n   - The evasive ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "ActionNode",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 132,
+                "startColumn": 5,
+                "endLineNumber": 132,
+                "endColumn": 5
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "d068c820-fc27-4109-afb4-6cb0558a0f5e"
+        },
+        {
+          "value": " randomly selects one of three behaviors:\n     - **Random Flank**: Moves perpendicular to the enemy's direction.\n     - **Random Dodge**: Executes a random angular dodge to confuse the enemy.\n     - **Random Burst**: Temporarily accelerates in a random direction to escape.\n\n3. **Normal Pathfinding**:\n   - The normal ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "ActionNode",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 132,
+                "startColumn": 5,
+                "endLineNumber": 132,
+                "endColumn": 5
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "4db60af0-9e01-4591-b209-74b7741108f1"
+        },
+        {
+          "value": " calculates steering forces to follow waypoints using the ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "Arrive",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 72,
+                "startColumn": 7,
+                "endLineNumber": 72,
+                "endColumn": 7
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\steering.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/steering.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/steering.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "9651159d-10d6-4d2e-8328-75067cdd4ed0"
+        },
+        {
+          "value": " behavior.\n   - Includes obstacle avoidance and boundary checks to ensure safe navigation.\n\n#### Key Features:\n- Dynamically switches between evasion and pathfinding based on proximity to the enemy.\n- Ensures smooth transitions between behaviors.\n- Incorporates boundary avoidance to prevent collisions with the environment.\n\n---\n\n### Behavior Tree of Enemy\nThe **enemy's behavior tree** is more complex, incorporating composite nodes to handle multiple conditions and actions. It prioritizes chasing the boid while avoiding obstacles.\n\n#### Structure:\n1. **Root Node**: A ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "DecisionBranch",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 104,
+                "startColumn": 9,
+                "endLineNumber": 104,
+                "endColumn": 9
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "aa2b8bcf-9166-44ab-bddb-413b186ec921"
+        },
+        {
+          "value": " that evaluates whether the boid is within the detection radius (500 units).\n   - **Condition**: Checks the distance between the enemy and the boid.\n   - **True Branch**: A ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "name": "DecisionBranch",
+            "kind": 12,
+            "containerName": "",
+            "location": {
+              "range": {
+                "startLineNumber": 104,
+                "startColumn": 9,
+                "endLineNumber": 104,
+                "endColumn": 9
+              },
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\behavior_tree.hpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/behavior_tree.hpp",
+                "scheme": "file"
+              }
+            }
+          },
+          "resolveId": "079fc63f-b0f3-4194-b7c9-870e1a68d43c"
+        },
+        {
+          "value": " that evaluates whether the enemy is near a wall.\n     - **Condition**: Checks for proximity to walls using the `avoidWall` method.\n     - **True Branch**: Executes `avoidWallAction` to steer away from walls.\n     - **False Branch**: Executes `chaseBoidAction` to pursue the boid.\n   - **False Branch**: Executes `wanderAction` to move randomly when the boid is not nearby.\n\n2. **Composite Nodes**:\n   - **Selector Node**: Chooses between chasing the boid or wandering based on proximity.\n   - **Sequence Node**: Combines wall avoidance and chasing into a sequential behavior.\n\n#### Key Features:\n- Prioritizes survival by avoiding walls and obstacles.\n- Aggressively pursues the boid when in range.\n- Falls back to wandering when no target is detected.\n\n---\n\n### Learning Tree\nThe **learning tree** is a decision tree trained using recorded behaviors to predict actions based on environmental states. It allows the enemy to adapt its behavior dynamically.\n\n#### Training:\n1. **Data Collection**:\n   - Records samples of the enemy's state, the boid's state, and the map layout during gameplay.\n   - Each sample includes features such as:\n     - Distance to the boid.\n     - Angle to the boid.\n     - Relative speed.\n     - Proximity to walls.\n\n2. **Tree Construction**:\n   - Uses the recorded samples to build a decision tree.\n   - Splits data based on feature thresholds to create internal nodes.\n   - Leaf nodes contain actions (e.g., \"Move toward the boid\" or \"Dodge\").\n\n#### Structure:\n1. **Internal Nodes**:\n   - Evaluate conditions (e.g., \"Is distance to the boid < threshold?\").\n   - Direct the traversal to the appropriate child node based on the result.\n\n2. **Leaf Nodes**:\n   - Contain actions that the enemy should execute based on the current state.\n\n#### Key Features:\n- Predicts actions based on the current state by traversing the tree.\n- Continuously improves through training, allowing the enemy to adapt to new scenarios.\n- Balances between learned behaviors and predefined fallback actions.",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        }
+      ],
+      "responseId": "response_6937575a-08c6-44eb-a453-43c4127877ad",
+      "result": {
+        "timings": {
+          "firstProgress": 1937,
+          "totalElapsed": 12710
+        },
+        "metadata": {
+          "codeBlocks": [],
+          "messages": [
+            {
+              "role": "user",
+              "content": "expand it further"
+            },
+            {
+              "role": "assistant",
+              "content": "### Behavior Tree of Boid\nThe **boid's behavior tree** is designed to dynamically switch between pathfinding and evasive maneuvers based on the proximity of an enemy. It uses a hierarchical structure of nodes to evaluate conditions and execute actions.\n\n#### Structure:\n1. **Root Node**: A `DecisionBranch` that evaluates whether an enemy is within the detection radius (200 units).\n   - **Condition**: Checks the distance between the boid and the enemy.\n   - **True Branch**: Executes evasive maneuvers using an `ActionNode`.\n   - **False Branch**: Executes normal pathfinding using another `ActionNode`.\n\n2. **Evasive Maneuvers**:\n   - The evasive `ActionNode` randomly selects one of three behaviors:\n     - **Random Flank**: Moves perpendicular to the enemy's direction.\n     - **Random Dodge**: Executes a random angular dodge to confuse the enemy.\n     - **Random Burst**: Temporarily accelerates in a random direction to escape.\n\n3. **Normal Pathfinding**:\n   - The normal `ActionNode` calculates steering forces to follow waypoints using the `Arrive` behavior.\n   - Includes obstacle avoidance and boundary checks to ensure safe navigation.\n\n#### Key Features:\n- Dynamically switches between evasion and pathfinding based on proximity to the enemy.\n- Ensures smooth transitions between behaviors.\n- Incorporates boundary avoidance to prevent collisions with the environment.\n\n---\n\n### Behavior Tree of Enemy\nThe **enemy's behavior tree** is more complex, incorporating composite nodes to handle multiple conditions and actions. It prioritizes chasing the boid while avoiding obstacles.\n\n#### Structure:\n1. **Root Node**: A `DecisionBranch` that evaluates whether the boid is within the detection radius (500 units).\n   - **Condition**: Checks the distance between the enemy and the boid.\n   - **True Branch**: A `DecisionBranch` that evaluates whether the enemy is near a wall.\n     - **Condition**: Checks for proximity to walls using the `avoidWall` method.\n     - **True Branch**: Executes `avoidWallAction` to steer away from walls.\n     - **False Branch**: Executes `chaseBoidAction` to pursue the boid.\n   - **False Branch**: Executes `wanderAction` to move randomly when the boid is not nearby.\n\n2. **Composite Nodes**:\n   - **Selector Node**: Chooses between chasing the boid or wandering based on proximity.\n   - **Sequence Node**: Combines wall avoidance and chasing into a sequential behavior.\n\n#### Key Features:\n- Prioritizes survival by avoiding walls and obstacles.\n- Aggressively pursues the boid when in range.\n- Falls back to wandering when no target is detected.\n\n---\n\n### Learning Tree\nThe **learning tree** is a decision tree trained using recorded behaviors to predict actions based on environmental states. It allows the enemy to adapt its behavior dynamically.\n\n#### Training:\n1. **Data Collection**:\n   - Records samples of the enemy's state, the boid's state, and the map layout during gameplay.\n   - Each sample includes features such as:\n     - Distance to the boid.\n     - Angle to the boid.\n     - Relative speed.\n     - Proximity to walls.\n\n2. **Tree Construction**:\n   - Uses the recorded samples to build a decision tree.\n   - Splits data based on feature thresholds to create internal nodes.\n   - Leaf nodes contain actions (e.g., \"Move toward the boid\" or \"Dodge\").\n\n#### Structure:\n1. **Internal Nodes**:\n   - Evaluate conditions (e.g., \"Is distance to the boid < threshold?\").\n   - Direct the traversal to the appropriate child node based on the result.\n\n2. **Leaf Nodes**:\n   - Contain actions that the enemy should execute based on the current state.\n\n#### Key Features:\n- Predicts actions based on the current state by traversing the tree.\n- Continuously improves through training, allowing the enemy to adapt to new scenarios.\n- Balances between learned behaviors and predefined fallback actions."
+            }
+          ],
+          "modelMessageId": "f37ffccf-724e-4fe5-8a63-a52dc0f4b0d0",
+          "responseId": "b82458c4-09ad-4bf1-8751-8fa18aa44129",
+          "sessionId": "cc99d242-82bd-4ad8-b145-0a7e65a16bee",
+          "agentId": "github.copilot.default"
+        }
+      },
+      "followups": [],
+      "isCanceled": false,
+      "agent": {
+        "extensionId": {
+          "value": "GitHub.copilot-chat",
+          "_lower": "github.copilot-chat"
+        },
+        "publisherDisplayName": "GitHub",
+        "extensionPublisherId": "GitHub",
+        "extensionDisplayName": "GitHub Copilot Chat",
+        "id": "github.copilot.default",
+        "description": "Ask Copilot",
+        "metadata": {
+          "themeIcon": {
+            "id": "copilot"
+          },
+          "hasFollowups": true,
+          "helpTextPrefix": "You can ask me general programming questions, or chat with the following participants which have specialized expertise and can perform actions:",
+          "helpTextVariablesPrefix": "You can also help me understand your question by using the following variables to give me extra context:",
+          "helpTextPostfix": {
+            "value": "To have a great conversation, ask me questions as if I was a real programmer:\n\n* **Show me the code** you want to talk about by having the files open and selecting the most important lines.\n* **Make refinements** by asking me follow-up questions, adding clarifications, providing errors, etc.\n* **Review my suggested code** and tell me about issues or improvements, so I can iterate on it.\n\nYou can also ask me questions about your editor selection by [starting an inline chat session](command:inlineChat.start).\n\nLearn more about [GitHub Copilot](https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted) in [Visual Studio Code](https://code.visualstudio.com/docs/copilot/overview). Or explore the [Copilot walkthrough](command:github.copilot.open.walkthrough).",
+            "isTrusted": {
+              "enabledCommands": [
+                "inlineChat.start",
+                "github.copilot.open.walkthrough"
+              ]
+            },
+            "supportThemeIcons": false,
+            "supportHtml": false,
+            "uris": {
+              "command:inlineChat.start": {
+                "$mid": 1,
+                "path": "inlineChat.start",
+                "scheme": "command"
+              },
+              "https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted": {
+                "$mid": 1,
+                "path": "/copilot/using-github-copilot/getting-started-with-github-copilot",
+                "scheme": "https",
+                "authority": "docs.github.com",
+                "query": "tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted"
+              },
+              "https://code.visualstudio.com/docs/copilot/overview": {
+                "$mid": 1,
+                "path": "/docs/copilot/overview",
+                "scheme": "https",
+                "authority": "code.visualstudio.com"
+              },
+              "command:github.copilot.open.walkthrough": {
+                "$mid": 1,
+                "path": "github.copilot.open.walkthrough",
+                "scheme": "command"
+              }
+            }
+          },
+          "supportIssueReporting": false,
+          "welcomeMessageContent": {
+            "icon": {
+              "id": "copilot-large"
+            },
+            "title": "Ask Copilot",
+            "message": {
+              "value": "Copilot is powered by AI, so mistakes are possible. Review output carefully before use.",
+              "supportThemeIcons": false,
+              "supportHtml": false,
+              "uris": {}
+            }
+          },
+          "requester": {
+            "name": "Airtastik",
+            "icon": {
+              "$mid": 1,
+              "path": "/u/58526333",
+              "scheme": "https",
+              "authority": "avatars.githubusercontent.com",
+              "query": "v=4"
+            }
+          }
+        },
+        "name": "GitHubCopilot",
+        "fullName": "GitHub Copilot",
+        "isDefault": true,
+        "locations": [
+          "panel"
+        ],
+        "slashCommands": [],
+        "disambiguation": [
+          {
+            "category": "generate_code_sample",
+            "description": "The user wants to generate code snippets without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Write an example of computing a SHA256 hash."
+            ]
+          },
+          {
+            "category": "add_feature_to_file",
+            "description": "The user wants to change code in a file that is provided in their request, without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Add a refresh button to the table widget."
+            ]
+          },
+          {
+            "category": "question_about_specific_files",
+            "description": "The user has a question about a specific file or code snippet that they have provided as part of their query, and the question does not require additional workspace context to answer.",
+            "examples": [
+              "What does this file do?"
+            ]
+          }
+        ]
+      },
+      "contentReferences": [
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "scheme": "file"
+          }
+        }
+      ],
+      "codeCitations": [],
+      "timestamp": 1745426254058
+    },
+    {
+      "requestId": "request_9434d92b-edf7-46d3-a607-40cdec0ac8e6",
+      "message": {
+        "text": "describe the ablitys of the boid and enemy",
+        "parts": [
+          {
+            "range": {
+              "start": 0,
+              "endExclusive": 42
+            },
+            "editorRange": {
+              "startLineNumber": 1,
+              "startColumn": 1,
+              "endLineNumber": 1,
+              "endColumn": 43
+            },
+            "text": "describe the ablitys of the boid and enemy",
+            "kind": "text"
+          }
+        ]
+      },
+      "variableData": {
+        "variables": [
+          {
+            "id": "vscode.implicit.viewport",
+            "name": "file:boid.cpp",
+            "value": {
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "scheme": "file"
+              },
+              "range": {
+                "startLineNumber": 234,
+                "startColumn": 1,
+                "endLineNumber": 244,
+                "endColumn": 2
+              }
+            },
+            "isFile": true,
+            "modelDescription": "User's current visible code"
+          }
+        ]
+      },
+      "response": [
+        {
+          "value": "### Abilities of the Boid\n\n1. **Pathfinding and Navigation**:\n   - The boid uses an **Arrive steering behavior** to navigate toward a target position smoothly.\n   - It follows waypoints while avoiding obstacles and boundaries.\n\n2. **Evasive Maneuvers**:\n   - When an enemy is detected within a certain radius, the boid switches to evasive behaviors.\n   - Evasive actions include:\n     - **Random Flank**: Moves perpendicular to the enemy's direction.\n     - **Random Dodge**: Executes a sudden angular movement to confuse the enemy.\n     - **Random Burst**: Temporarily accelerates in a random direction to escape.\n\n3. **Boundary Avoidance**:\n   - The boid avoids collisions with the edges of the window by applying a boundary force.\n\n4. **Dynamic Decision-Making**:\n   - The boid uses a **behavior tree** to decide between normal pathfinding and evasive maneuvers based on the proximity of the enemy.\n\n5. **Speed Limiting**:\n   - The boid ensures its velocity does not exceed its maximum speed by normalizing and scaling its velocity vector.\n\n6. **Collision Handling**:\n   - The boid detects collisions with walls in the map and adjusts its position and velocity accordingly.\n\n---\n\n### Abilities of the Enemy\n\n1. **Chasing the Boid**:\n   - The enemy aggressively pursues the boid when it is within a detection radius.\n   - It calculates the direction to the boid and applies acceleration to close the distance.\n\n2. **Wall Avoidance**:\n   - The enemy detects nearby walls and steers away to avoid collisions.\n\n3. **Wandering**:\n   - When the boid is not detected, the enemy switches to a wandering behavior, moving randomly within the environment.\n\n4. **Behavior Tree for Decision-Making**:\n   - The enemy uses a **behavior tree** to dynamically decide its actions:\n     - If the boid is detected, it checks for walls and either avoids them or chases the boid.\n     - If the boid is not detected, it defaults to wandering.\n\n5. **Learning and Adaptation** (for LearningEnemy):\n   - The **LearningEnemy** variant records gameplay data, such as the boid's position, velocity, and map layout.\n   - It trains a decision tree to predict actions based on environmental states.\n   - Over time, it adapts its behavior to become more effective at chasing or evading.\n\n6. **Speed Limiting**:\n   - Similar to the boid, the enemy ensures its velocity does not exceed its maximum speed.\n\n7. **Dynamic Steering**:\n   - The enemy adjusts its velocity and orientation dynamically based on its current behavior (chasing, avoiding, or wandering).",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        }
+      ],
+      "responseId": "response_aca0b6d0-cd7c-497c-828d-1a517b06869c",
+      "result": {
+        "timings": {
+          "firstProgress": 1403,
+          "totalElapsed": 10659
+        },
+        "metadata": {
+          "codeBlocks": [],
+          "messages": [
+            {
+              "role": "user",
+              "content": "describe the ablitys of the boid and enemy"
+            },
+            {
+              "role": "assistant",
+              "content": "### Abilities of the Boid\n\n1. **Pathfinding and Navigation**:\n   - The boid uses an **Arrive steering behavior** to navigate toward a target position smoothly.\n   - It follows waypoints while avoiding obstacles and boundaries.\n\n2. **Evasive Maneuvers**:\n   - When an enemy is detected within a certain radius, the boid switches to evasive behaviors.\n   - Evasive actions include:\n     - **Random Flank**: Moves perpendicular to the enemy's direction.\n     - **Random Dodge**: Executes a sudden angular movement to confuse the enemy.\n     - **Random Burst**: Temporarily accelerates in a random direction to escape.\n\n3. **Boundary Avoidance**:\n   - The boid avoids collisions with the edges of the window by applying a boundary force.\n\n4. **Dynamic Decision-Making**:\n   - The boid uses a **behavior tree** to decide between normal pathfinding and evasive maneuvers based on the proximity of the enemy.\n\n5. **Speed Limiting**:\n   - The boid ensures its velocity does not exceed its maximum speed by normalizing and scaling its velocity vector.\n\n6. **Collision Handling**:\n   - The boid detects collisions with walls in the map and adjusts its position and velocity accordingly.\n\n---\n\n### Abilities of the Enemy\n\n1. **Chasing the Boid**:\n   - The enemy aggressively pursues the boid when it is within a detection radius.\n   - It calculates the direction to the boid and applies acceleration to close the distance.\n\n2. **Wall Avoidance**:\n   - The enemy detects nearby walls and steers away to avoid collisions.\n\n3. **Wandering**:\n   - When the boid is not detected, the enemy switches to a wandering behavior, moving randomly within the environment.\n\n4. **Behavior Tree for Decision-Making**:\n   - The enemy uses a **behavior tree** to dynamically decide its actions:\n     - If the boid is detected, it checks for walls and either avoids them or chases the boid.\n     - If the boid is not detected, it defaults to wandering.\n\n5. **Learning and Adaptation** (for LearningEnemy):\n   - The **LearningEnemy** variant records gameplay data, such as the boid's position, velocity, and map layout.\n   - It trains a decision tree to predict actions based on environmental states.\n   - Over time, it adapts its behavior to become more effective at chasing or evading.\n\n6. **Speed Limiting**:\n   - Similar to the boid, the enemy ensures its velocity does not exceed its maximum speed.\n\n7. **Dynamic Steering**:\n   - The enemy adjusts its velocity and orientation dynamically based on its current behavior (chasing, avoiding, or wandering)."
+            }
+          ],
+          "modelMessageId": "bee21663-f6b2-4188-8888-6d401e2b1179",
+          "responseId": "cf4a5670-f735-4e78-a7f4-52bc2764f35e",
+          "sessionId": "cc99d242-82bd-4ad8-b145-0a7e65a16bee",
+          "agentId": "github.copilot.default"
+        }
+      },
+      "followups": [],
+      "isCanceled": false,
+      "agent": {
+        "extensionId": {
+          "value": "GitHub.copilot-chat",
+          "_lower": "github.copilot-chat"
+        },
+        "publisherDisplayName": "GitHub",
+        "extensionPublisherId": "GitHub",
+        "extensionDisplayName": "GitHub Copilot Chat",
+        "id": "github.copilot.default",
+        "description": "Ask Copilot",
+        "metadata": {
+          "themeIcon": {
+            "id": "copilot"
+          },
+          "hasFollowups": true,
+          "helpTextPrefix": "You can ask me general programming questions, or chat with the following participants which have specialized expertise and can perform actions:",
+          "helpTextVariablesPrefix": "You can also help me understand your question by using the following variables to give me extra context:",
+          "helpTextPostfix": {
+            "value": "To have a great conversation, ask me questions as if I was a real programmer:\n\n* **Show me the code** you want to talk about by having the files open and selecting the most important lines.\n* **Make refinements** by asking me follow-up questions, adding clarifications, providing errors, etc.\n* **Review my suggested code** and tell me about issues or improvements, so I can iterate on it.\n\nYou can also ask me questions about your editor selection by [starting an inline chat session](command:inlineChat.start).\n\nLearn more about [GitHub Copilot](https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted) in [Visual Studio Code](https://code.visualstudio.com/docs/copilot/overview). Or explore the [Copilot walkthrough](command:github.copilot.open.walkthrough).",
+            "isTrusted": {
+              "enabledCommands": [
+                "inlineChat.start",
+                "github.copilot.open.walkthrough"
+              ]
+            },
+            "supportThemeIcons": false,
+            "supportHtml": false,
+            "uris": {
+              "command:inlineChat.start": {
+                "$mid": 1,
+                "path": "inlineChat.start",
+                "scheme": "command"
+              },
+              "https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted": {
+                "$mid": 1,
+                "path": "/copilot/using-github-copilot/getting-started-with-github-copilot",
+                "scheme": "https",
+                "authority": "docs.github.com",
+                "query": "tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted"
+              },
+              "https://code.visualstudio.com/docs/copilot/overview": {
+                "$mid": 1,
+                "path": "/docs/copilot/overview",
+                "scheme": "https",
+                "authority": "code.visualstudio.com"
+              },
+              "command:github.copilot.open.walkthrough": {
+                "$mid": 1,
+                "path": "github.copilot.open.walkthrough",
+                "scheme": "command"
+              }
+            }
+          },
+          "supportIssueReporting": false,
+          "welcomeMessageContent": {
+            "icon": {
+              "id": "copilot-large"
+            },
+            "title": "Ask Copilot",
+            "message": {
+              "value": "Copilot is powered by AI, so mistakes are possible. Review output carefully before use.",
+              "supportThemeIcons": false,
+              "supportHtml": false,
+              "uris": {}
+            }
+          },
+          "requester": {
+            "name": "Airtastik",
+            "icon": {
+              "$mid": 1,
+              "path": "/u/58526333",
+              "scheme": "https",
+              "authority": "avatars.githubusercontent.com",
+              "query": "v=4"
+            }
+          }
+        },
+        "name": "GitHubCopilot",
+        "fullName": "GitHub Copilot",
+        "isDefault": true,
+        "locations": [
+          "panel"
+        ],
+        "slashCommands": [],
+        "disambiguation": [
+          {
+            "category": "generate_code_sample",
+            "description": "The user wants to generate code snippets without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Write an example of computing a SHA256 hash."
+            ]
+          },
+          {
+            "category": "add_feature_to_file",
+            "description": "The user wants to change code in a file that is provided in their request, without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Add a refresh button to the table widget."
+            ]
+          },
+          {
+            "category": "question_about_specific_files",
+            "description": "The user has a question about a specific file or code snippet that they have provided as part of their query, and the question does not require additional workspace context to answer.",
+            "examples": [
+              "What does this file do?"
+            ]
+          }
+        ]
+      },
+      "contentReferences": [
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "scheme": "file"
+          }
+        }
+      ],
+      "codeCitations": [],
+      "timestamp": 1745426732472
+    },
+    {
+      "requestId": "request_39ac3eb8-e5f2-467f-b4af-8354319ad725",
+      "message": {
+        "text": "write them in paragraph form",
+        "parts": [
+          {
+            "range": {
+              "start": 0,
+              "endExclusive": 28
+            },
+            "editorRange": {
+              "startLineNumber": 1,
+              "startColumn": 1,
+              "endLineNumber": 1,
+              "endColumn": 29
+            },
+            "text": "write them in paragraph form",
+            "kind": "text"
+          }
+        ]
+      },
+      "variableData": {
+        "variables": [
+          {
+            "id": "vscode.implicit.viewport",
+            "name": "file:boid.cpp",
+            "value": {
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "scheme": "file"
+              },
+              "range": {
+                "startLineNumber": 234,
+                "startColumn": 1,
+                "endLineNumber": 244,
+                "endColumn": 2
+              }
+            },
+            "isFile": true,
+            "modelDescription": "User's current visible code"
+          }
+        ]
+      },
+      "response": [
+        {
+          "value": "The **boid** is equipped with several abilities that allow it to navigate its environment intelligently. It uses an **Arrive steering behavior** to smoothly move toward target positions, following waypoints while avoiding obstacles and boundaries. When an enemy is detected within a specified radius, the boid switches to **evasive maneuvers**, which include randomized behaviors such as flanking, dodging, or bursting in a random direction to escape. The boid also incorporates **boundary avoidance**, ensuring it does not collide with the edges of the environment by applying corrective forces. Its velocity is dynamically adjusted to stay within its maximum speed, and its orientation is updated based on its movement direction. The boid uses a **behavior tree** to decide between normal pathfinding and evasive actions, dynamically adapting to the presence of enemies. Additionally, it handles collisions with walls by reversing its velocity and slightly reducing its speed.\n\nThe **enemy** is designed to aggressively pursue the boid while maintaining its own safety. It uses a **behavior tree** to make decisions based on its environment. When the boid is detected within a certain radius, the enemy evaluates whether it is near a wall. If a wall is detected, the enemy executes a wall avoidance behavior to steer away from obstacles. Otherwise, it switches to a chasing behavior, calculating the direction to the boid and applying acceleration to close the distance. If the boid is not detected, the enemy defaults to a wandering behavior, moving randomly within the environment. The enemy also limits its speed to ensure realistic movement and dynamically adjusts its velocity and orientation based on its current behavior. For the **LearningEnemy** variant, the enemy records gameplay data, such as the boid's position, velocity, and map layout, to train a decision tree. This allows it to predict actions based on environmental states, enabling it to adapt and improve its behavior over time. The learning system balances between predefined fallback actions and learned behaviors, making the enemy more effective in chasing or evading as it gains experience.",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        }
+      ],
+      "responseId": "response_6b3b42e1-d0d4-4057-9c9d-88342317cda5",
+      "result": {
+        "timings": {
+          "firstProgress": 1040,
+          "totalElapsed": 6677
+        },
+        "metadata": {
+          "codeBlocks": [],
+          "messages": [
+            {
+              "role": "user",
+              "content": "write them in paragraph form"
+            },
+            {
+              "role": "assistant",
+              "content": "The **boid** is equipped with several abilities that allow it to navigate its environment intelligently. It uses an **Arrive steering behavior** to smoothly move toward target positions, following waypoints while avoiding obstacles and boundaries. When an enemy is detected within a specified radius, the boid switches to **evasive maneuvers**, which include randomized behaviors such as flanking, dodging, or bursting in a random direction to escape. The boid also incorporates **boundary avoidance**, ensuring it does not collide with the edges of the environment by applying corrective forces. Its velocity is dynamically adjusted to stay within its maximum speed, and its orientation is updated based on its movement direction. The boid uses a **behavior tree** to decide between normal pathfinding and evasive actions, dynamically adapting to the presence of enemies. Additionally, it handles collisions with walls by reversing its velocity and slightly reducing its speed.\n\nThe **enemy** is designed to aggressively pursue the boid while maintaining its own safety. It uses a **behavior tree** to make decisions based on its environment. When the boid is detected within a certain radius, the enemy evaluates whether it is near a wall. If a wall is detected, the enemy executes a wall avoidance behavior to steer away from obstacles. Otherwise, it switches to a chasing behavior, calculating the direction to the boid and applying acceleration to close the distance. If the boid is not detected, the enemy defaults to a wandering behavior, moving randomly within the environment. The enemy also limits its speed to ensure realistic movement and dynamically adjusts its velocity and orientation based on its current behavior. For the **LearningEnemy** variant, the enemy records gameplay data, such as the boid's position, velocity, and map layout, to train a decision tree. This allows it to predict actions based on environmental states, enabling it to adapt and improve its behavior over time. The learning system balances between predefined fallback actions and learned behaviors, making the enemy more effective in chasing or evading as it gains experience."
+            }
+          ],
+          "modelMessageId": "a7e166fd-f446-4546-bb57-1db74961476c",
+          "responseId": "610b762d-9375-4afd-9b44-3717a90ae5fb",
+          "sessionId": "cc99d242-82bd-4ad8-b145-0a7e65a16bee",
+          "agentId": "github.copilot.default"
+        }
+      },
+      "followups": [],
+      "isCanceled": false,
+      "agent": {
+        "extensionId": {
+          "value": "GitHub.copilot-chat",
+          "_lower": "github.copilot-chat"
+        },
+        "publisherDisplayName": "GitHub",
+        "extensionPublisherId": "GitHub",
+        "extensionDisplayName": "GitHub Copilot Chat",
+        "id": "github.copilot.default",
+        "description": "Ask Copilot",
+        "metadata": {
+          "themeIcon": {
+            "id": "copilot"
+          },
+          "hasFollowups": true,
+          "helpTextPrefix": "You can ask me general programming questions, or chat with the following participants which have specialized expertise and can perform actions:",
+          "helpTextVariablesPrefix": "You can also help me understand your question by using the following variables to give me extra context:",
+          "helpTextPostfix": {
+            "value": "To have a great conversation, ask me questions as if I was a real programmer:\n\n* **Show me the code** you want to talk about by having the files open and selecting the most important lines.\n* **Make refinements** by asking me follow-up questions, adding clarifications, providing errors, etc.\n* **Review my suggested code** and tell me about issues or improvements, so I can iterate on it.\n\nYou can also ask me questions about your editor selection by [starting an inline chat session](command:inlineChat.start).\n\nLearn more about [GitHub Copilot](https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted) in [Visual Studio Code](https://code.visualstudio.com/docs/copilot/overview). Or explore the [Copilot walkthrough](command:github.copilot.open.walkthrough).",
+            "isTrusted": {
+              "enabledCommands": [
+                "inlineChat.start",
+                "github.copilot.open.walkthrough"
+              ]
+            },
+            "supportThemeIcons": false,
+            "supportHtml": false,
+            "uris": {
+              "command:inlineChat.start": {
+                "$mid": 1,
+                "path": "inlineChat.start",
+                "scheme": "command"
+              },
+              "https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted": {
+                "$mid": 1,
+                "path": "/copilot/using-github-copilot/getting-started-with-github-copilot",
+                "scheme": "https",
+                "authority": "docs.github.com",
+                "query": "tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted"
+              },
+              "https://code.visualstudio.com/docs/copilot/overview": {
+                "$mid": 1,
+                "path": "/docs/copilot/overview",
+                "scheme": "https",
+                "authority": "code.visualstudio.com"
+              },
+              "command:github.copilot.open.walkthrough": {
+                "$mid": 1,
+                "path": "github.copilot.open.walkthrough",
+                "scheme": "command"
+              }
+            }
+          },
+          "supportIssueReporting": false,
+          "welcomeMessageContent": {
+            "icon": {
+              "id": "copilot-large"
+            },
+            "title": "Ask Copilot",
+            "message": {
+              "value": "Copilot is powered by AI, so mistakes are possible. Review output carefully before use.",
+              "supportThemeIcons": false,
+              "supportHtml": false,
+              "uris": {}
+            }
+          },
+          "requester": {
+            "name": "Airtastik",
+            "icon": {
+              "$mid": 1,
+              "path": "/u/58526333",
+              "scheme": "https",
+              "authority": "avatars.githubusercontent.com",
+              "query": "v=4"
+            }
+          }
+        },
+        "name": "GitHubCopilot",
+        "fullName": "GitHub Copilot",
+        "isDefault": true,
+        "locations": [
+          "panel"
+        ],
+        "slashCommands": [],
+        "disambiguation": [
+          {
+            "category": "generate_code_sample",
+            "description": "The user wants to generate code snippets without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Write an example of computing a SHA256 hash."
+            ]
+          },
+          {
+            "category": "add_feature_to_file",
+            "description": "The user wants to change code in a file that is provided in their request, without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Add a refresh button to the table widget."
+            ]
+          },
+          {
+            "category": "question_about_specific_files",
+            "description": "The user has a question about a specific file or code snippet that they have provided as part of their query, and the question does not require additional workspace context to answer.",
+            "examples": [
+              "What does this file do?"
+            ]
+          }
+        ]
+      },
+      "contentReferences": [
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "scheme": "file"
+          }
+        }
+      ],
+      "codeCitations": [],
+      "timestamp": 1745426975626
+    },
+    {
+      "requestId": "request_bffef845-cd07-4523-8c20-161a7ee57fed",
+      "message": {
+        "text": "modify makefile so it can allow the code to be compiled in a standardized Ubuntu 20.04 environment",
+        "parts": [
+          {
+            "range": {
+              "start": 0,
+              "endExclusive": 98
+            },
+            "editorRange": {
+              "startLineNumber": 1,
+              "startColumn": 1,
+              "endLineNumber": 1,
+              "endColumn": 99
+            },
+            "text": "modify makefile so it can allow the code to be compiled in a standardized Ubuntu 20.04 environment",
+            "kind": "text"
+          }
+        ]
+      },
+      "variableData": {
+        "variables": [
+          {
+            "id": "vscode.implicit.viewport",
+            "name": "file:boid.cpp",
+            "value": {
+              "uri": {
+                "$mid": 1,
+                "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+                "_sep": 1,
+                "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+                "scheme": "file"
+              },
+              "range": {
+                "startLineNumber": 234,
+                "startColumn": 1,
+                "endLineNumber": 244,
+                "endColumn": 2
+              }
+            },
+            "isFile": true,
+            "modelDescription": "User's current visible code"
+          }
+        ]
+      },
+      "response": [
+        {
+          "value": "To modify your ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\CMakeLists.txt",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+            "scheme": "file"
+          }
+        },
+        {
+          "value": " file so it can compile in a standardized Ubuntu 20.04 environment, you need to ensure that all dependencies (like SFML) are properly handled and that the compiler settings are compatible with the environment. Below is the updated ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\CMakeLists.txt",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+            "scheme": "file"
+          }
+        },
+        {
+          "value": " file:\n\n```cmake\n",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "codeblockUri",
+          "uri": {
+            "$mid": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+            "scheme": "file"
+          }
+        },
+        {
+          "value": "cmake_minimum_required(VERSION 3.16) # Compatible with Ubuntu 20.04\nproject(CMakeSFMLProject LANGUAGES CXX)\n\n# Set the output directory for the compiled binaries\nset(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)\n\n# Set the C++ standard\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\n# Option to build shared libraries\noption(BUILD_SHARED_LIBS \"Build shared libraries\" OFF)\n\n# Include FetchContent to download dependencies\ninclude(FetchContent)\n\n# Fetch SFML library\nFetchContent_Declare(SFML\n    GIT_REPOSITORY https://github.com/SFML/SFML.git\n    GIT_TAG 2.6.2\n    GIT_SHALLOW ON\n    EXCLUDE_FROM_ALL\n    SYSTEM)\nFetchContent_MakeAvailable(SFML)\n\n# Add the executable and source files\nadd_executable(main src/main.cpp src/path.cpp src/learned_behavior.cpp src/learning_enemy.cpp src/boid.cpp src/enemy_boid.cpp)\n\n# Link SFML libraries\ntarget_link_libraries(main PRIVATE sfml-graphics sfml-window sfml-system)\n\n# Add include directories\ntarget_include_directories(main PRIVATE include)\n\n# Compiler settings for Ubuntu\nif(UNIX AND NOT WIN32)\n    # Enable all warnings and treat warnings as errors\n    target_compile_options(main PRIVATE -Wall -Wextra -Werror)\n    \n    # Link pthread for multithreading support\n    target_link_libraries(main PRIVATE pthread)\nendif()\n\n# Additional settings for Windows (if needed in the future)\nif(WIN32)\n    # Windows-specific settings can go here\nendif()\n```\n\n### Key Changes:\n1. **CMake Version**: Changed `cmake_minimum_required` to `3.16`, which is compatible with Ubuntu 20.04.\n2. **C++ Standard**: Explicitly set `CMAKE_CXX_STANDARD` to 17 and made it required.\n3. **SFML Linking**: Added `sfml-window` and `sfml-system` to the `target_link_libraries` to ensure all SFML components are linked.\n4. **Include Directories**: Added ",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        },
+        {
+          "kind": "inlineReference",
+          "inlineReference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\include\\",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/include/",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/include/",
+            "scheme": "file"
+          }
+        },
+        {
+          "value": " as the directory for header files.\n5. **Compiler Warnings**: Added `-Wall -Wextra -Werror` for stricter compilation on Unix systems.\n6. **Pthread Linking**: Linked `pthread` for multithreading support, which is often required on Linux systems.\n\n### Instructions for Ubuntu 20.04:\n1. Install dependencies:\n   ```bash\n   sudo apt update\n   sudo apt install build-essential cmake libsfml-dev\n   ```\n2. Create a build directory and compile:\n   ```bash\n   mkdir build\n   cd build\n   cmake ..\n   make\n   ```\n3. Run the compiled binary:\n   ```bash\n   ./bin/main\n   ``` \n\nThis setup ensures compatibility with Ubuntu 20.04 and provides a robust build configuration.",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/",
+            "scheme": "file"
+          }
+        }
+      ],
+      "responseId": "response_ee1fb59a-7107-46d7-83d5-26523fa03684",
+      "result": {
+        "timings": {
+          "firstProgress": 1454,
+          "totalElapsed": 11658
+        },
+        "metadata": {
+          "codeBlocks": [
+            {
+              "code": "cmake_minimum_required(VERSION 3.16) # Compatible with Ubuntu 20.04\nproject(CMakeSFMLProject LANGUAGES CXX)\n\n# Set the output directory for the compiled binaries\nset(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)\n\n# Set the C++ standard\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\n# Option to build shared libraries\noption(BUILD_SHARED_LIBS \"Build shared libraries\" OFF)\n\n# Include FetchContent to download dependencies\ninclude(FetchContent)\n\n# Fetch SFML library\nFetchContent_Declare(SFML\n    GIT_REPOSITORY https://github.com/SFML/SFML.git\n    GIT_TAG 2.6.2\n    GIT_SHALLOW ON\n    EXCLUDE_FROM_ALL\n    SYSTEM)\nFetchContent_MakeAvailable(SFML)\n\n# Add the executable and source files\nadd_executable(main src/main.cpp src/path.cpp src/learned_behavior.cpp src/learning_enemy.cpp src/boid.cpp src/enemy_boid.cpp)\n\n# Link SFML libraries\ntarget_link_libraries(main PRIVATE sfml-graphics sfml-window sfml-system)\n\n# Add include directories\ntarget_include_directories(main PRIVATE include)\n\n# Compiler settings for Ubuntu\nif(UNIX AND NOT WIN32)\n    # Enable all warnings and treat warnings as errors\n    target_compile_options(main PRIVATE -Wall -Wextra -Werror)\n    \n    # Link pthread for multithreading support\n    target_link_libraries(main PRIVATE pthread)\nendif()\n\n# Additional settings for Windows (if needed in the future)\nif(WIN32)\n    # Windows-specific settings can go here\nendif()\n",
+              "resource": {
+                "$mid": 1,
+                "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/CMakeLists.txt",
+                "scheme": "file"
+              },
+              "language": "cmake",
+              "markdownBeforeBlock": "To modify your  file so it can compile in a standardized Ubuntu 20.04 environment, you need to ensure that all dependencies (like SFML) are properly handled and that the compiler settings are compatible with the environment. Below is the updated  file:\n\n"
+            }
+          ],
+          "messages": [
+            {
+              "role": "user",
+              "content": "modify makefile so it can allow the code to be compiled in a standardized Ubuntu 20.04 environment"
+            },
+            {
+              "role": "assistant",
+              "content": "To modify your `CMakeLists.txt` file so it can compile in a standardized Ubuntu 20.04 environment, you need to ensure that all dependencies (like SFML) are properly handled and that the compiler settings are compatible with the environment. Below is the updated `CMakeLists.txt` file:\n\n```cmake\n# filepath: c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\CMakeLists.txt\ncmake_minimum_required(VERSION 3.16) # Compatible with Ubuntu 20.04\nproject(CMakeSFMLProject LANGUAGES CXX)\n\n# Set the output directory for the compiled binaries\nset(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)\n\n# Set the C++ standard\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\n# Option to build shared libraries\noption(BUILD_SHARED_LIBS \"Build shared libraries\" OFF)\n\n# Include FetchContent to download dependencies\ninclude(FetchContent)\n\n# Fetch SFML library\nFetchContent_Declare(SFML\n    GIT_REPOSITORY https://github.com/SFML/SFML.git\n    GIT_TAG 2.6.2\n    GIT_SHALLOW ON\n    EXCLUDE_FROM_ALL\n    SYSTEM)\nFetchContent_MakeAvailable(SFML)\n\n# Add the executable and source files\nadd_executable(main src/main.cpp src/path.cpp src/learned_behavior.cpp src/learning_enemy.cpp src/boid.cpp src/enemy_boid.cpp)\n\n# Link SFML libraries\ntarget_link_libraries(main PRIVATE sfml-graphics sfml-window sfml-system)\n\n# Add include directories\ntarget_include_directories(main PRIVATE include)\n\n# Compiler settings for Ubuntu\nif(UNIX AND NOT WIN32)\n    # Enable all warnings and treat warnings as errors\n    target_compile_options(main PRIVATE -Wall -Wextra -Werror)\n    \n    # Link pthread for multithreading support\n    target_link_libraries(main PRIVATE pthread)\nendif()\n\n# Additional settings for Windows (if needed in the future)\nif(WIN32)\n    # Windows-specific settings can go here\nendif()\n```\n\n### Key Changes:\n1. **CMake Version**: Changed `cmake_minimum_required` to `3.16`, which is compatible with Ubuntu 20.04.\n2. **C++ Standard**: Explicitly set `CMAKE_CXX_STANDARD` to 17 and made it required.\n3. **SFML Linking**: Added `sfml-window` and `sfml-system` to the `target_link_libraries` to ensure all SFML components are linked.\n4. **Include Directories**: Added `include` as the directory for header files.\n5. **Compiler Warnings**: Added `-Wall -Wextra -Werror` for stricter compilation on Unix systems.\n6. **Pthread Linking**: Linked `pthread` for multithreading support, which is often required on Linux systems.\n\n### Instructions for Ubuntu 20.04:\n1. Install dependencies:\n   ```bash\n   sudo apt update\n   sudo apt install build-essential cmake libsfml-dev\n   ```\n2. Create a build directory and compile:\n   ```bash\n   mkdir build\n   cd build\n   cmake ..\n   make\n   ```\n3. Run the compiled binary:\n   ```bash\n   ./bin/main\n   ``` \n\nThis setup ensures compatibility with Ubuntu 20.04 and provides a robust build configuration."
+            }
+          ],
+          "modelMessageId": "92904214-199c-49fc-8e66-dc33d87df154",
+          "responseId": "da6b7a8b-268a-453f-9254-34a705c81961",
+          "sessionId": "cc99d242-82bd-4ad8-b145-0a7e65a16bee",
+          "agentId": "github.copilot.default"
+        }
+      },
+      "followups": [],
+      "isCanceled": false,
+      "agent": {
+        "extensionId": {
+          "value": "GitHub.copilot-chat",
+          "_lower": "github.copilot-chat"
+        },
+        "publisherDisplayName": "GitHub",
+        "extensionPublisherId": "GitHub",
+        "extensionDisplayName": "GitHub Copilot Chat",
+        "id": "github.copilot.default",
+        "description": "Ask Copilot",
+        "metadata": {
+          "themeIcon": {
+            "id": "copilot"
+          },
+          "hasFollowups": true,
+          "helpTextPrefix": "You can ask me general programming questions, or chat with the following participants which have specialized expertise and can perform actions:",
+          "helpTextVariablesPrefix": "You can also help me understand your question by using the following variables to give me extra context:",
+          "helpTextPostfix": {
+            "value": "To have a great conversation, ask me questions as if I was a real programmer:\n\n* **Show me the code** you want to talk about by having the files open and selecting the most important lines.\n* **Make refinements** by asking me follow-up questions, adding clarifications, providing errors, etc.\n* **Review my suggested code** and tell me about issues or improvements, so I can iterate on it.\n\nYou can also ask me questions about your editor selection by [starting an inline chat session](command:inlineChat.start).\n\nLearn more about [GitHub Copilot](https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted) in [Visual Studio Code](https://code.visualstudio.com/docs/copilot/overview). Or explore the [Copilot walkthrough](command:github.copilot.open.walkthrough).",
+            "isTrusted": {
+              "enabledCommands": [
+                "inlineChat.start",
+                "github.copilot.open.walkthrough"
+              ]
+            },
+            "supportThemeIcons": false,
+            "supportHtml": false,
+            "uris": {
+              "command:inlineChat.start": {
+                "$mid": 1,
+                "path": "inlineChat.start",
+                "scheme": "command"
+              },
+              "https://docs.github.com/copilot/using-github-copilot/getting-started-with-github-copilot?tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted": {
+                "$mid": 1,
+                "path": "/copilot/using-github-copilot/getting-started-with-github-copilot",
+                "scheme": "https",
+                "authority": "docs.github.com",
+                "query": "tool=vscode&utm_source=editor&utm_medium=chat-panel&utm_campaign=2024q3-em-MSFT-getstarted"
+              },
+              "https://code.visualstudio.com/docs/copilot/overview": {
+                "$mid": 1,
+                "path": "/docs/copilot/overview",
+                "scheme": "https",
+                "authority": "code.visualstudio.com"
+              },
+              "command:github.copilot.open.walkthrough": {
+                "$mid": 1,
+                "path": "github.copilot.open.walkthrough",
+                "scheme": "command"
+              }
+            }
+          },
+          "supportIssueReporting": false,
+          "welcomeMessageContent": {
+            "icon": {
+              "id": "copilot-large"
+            },
+            "title": "Ask Copilot",
+            "message": {
+              "value": "Copilot is powered by AI, so mistakes are possible. Review output carefully before use.",
+              "supportThemeIcons": false,
+              "supportHtml": false,
+              "uris": {}
+            }
+          },
+          "requester": {
+            "name": "Airtastik",
+            "icon": {
+              "$mid": 1,
+              "path": "/u/58526333",
+              "scheme": "https",
+              "authority": "avatars.githubusercontent.com",
+              "query": "v=4"
+            }
+          }
+        },
+        "name": "GitHubCopilot",
+        "fullName": "GitHub Copilot",
+        "isDefault": true,
+        "locations": [
+          "panel"
+        ],
+        "slashCommands": [],
+        "disambiguation": [
+          {
+            "category": "generate_code_sample",
+            "description": "The user wants to generate code snippets without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Write an example of computing a SHA256 hash."
+            ]
+          },
+          {
+            "category": "add_feature_to_file",
+            "description": "The user wants to change code in a file that is provided in their request, without referencing the contents of the current workspace. This category does not include generating entire projects.",
+            "examples": [
+              "Add a refresh button to the table widget."
+            ]
+          },
+          {
+            "category": "question_about_specific_files",
+            "description": "The user has a question about a specific file or code snippet that they have provided as part of their query, and the question does not require additional workspace context to answer.",
+            "examples": [
+              "What does this file do?"
+            ]
+          }
+        ]
+      },
+      "contentReferences": [
+        {
+          "kind": "reference",
+          "reference": {
+            "$mid": 1,
+            "fsPath": "c:\\Users\\Trist\\Documents\\GitHub\\GAIHW2\\src\\boid.cpp",
+            "_sep": 1,
+            "external": "file:///c%3A/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "path": "/c:/Users/Trist/Documents/GitHub/GAIHW2/src/boid.cpp",
+            "scheme": "file"
+          }
+        }
+      ],
+      "codeCitations": [],
+      "timestamp": 1745427350245
+    }
+  ]
+}
