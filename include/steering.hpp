@@ -71,7 +71,7 @@ class SteeringBehavior {
 };
 class Arrive {
     public:
-        sf::Vector2f calculate(Kinematic& character, Kinematic& target) {
+    sf::Vector2f calculate(const Kinematic& character, const Kinematic& target){
             sf::Vector2f direction = target.position - character.position;
             float distance = std::sqrt(direction.x * direction.x + direction.y * direction.y);
     

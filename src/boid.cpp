@@ -35,61 +35,46 @@ boid::~boid() {
 
 // Build the decision tree for intelligent behavior
 void boid::buildDecisionTree() {
-    // Create action nodes
-    auto fleeEnemyAction = new ActionNode(
-        [this](const Kinematic& k, const Kinematic& /*t*/, const Kinematic& e, 
-               const std::vector<std::vector<int>>& /*map*/, int /*tileSize*/) -> sf::Vector2f {
-            sf::Vector2f fleeDirection = k.position - e.position;
-            float distance = length(fleeDirection);
-            if (distance > 0.1f) {
-                fleeDirection = normalize(fleeDirection) * k.maxAcceleration;
+    // ...existing code...
+
+    // Add path deviation check
+    auto isPathBlocked = [](const Kinematic& k, const Kinematic& t,
+                           const Kinematic& /*e*/,
+                           const std::vector<std::vector<int>>& mapData,
+                           int tileSize) -> bool {
+        // Check if there's a wall between current position and target
+        sf::Vector2f direction = t.position - k.position;
+        float distance = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+        sf::Vector2f normalized = direction / distance;
+
+        // Check several points along the path
+        for (float d = 0; d < distance; d += tileSize / 2.0f) {
+            sf::Vector2f checkPos = k.position + normalized * d;
+            int checkX = static_cast<int>(checkPos.x / tileSize);
+            int checkY = static_cast<int>(checkPos.y / tileSize);
+
+            if (checkX >= 0 && static_cast<size_t>(checkX) < mapData[0].size() &&
+                checkY >= 0 && static_cast<size_t>(checkY) < mapData.size() &&
+                mapData[checkY][checkX] == 1) {
+                return true; // Path is blocked
             }
-            return fleeDirection;
         }
-    );
-
-    auto avoidWallAction = new ActionNode(
-        [this](const Kinematic& k, const Kinematic& /*t*/, const Kinematic& /*e*/, 
-               const std::vector<std::vector<int>>& mapData, int tileSize) -> sf::Vector2f {
-            sf::Vector2f futurePos = k.position + normalize(k.velocity) * 50.0f;
-            int tileX = static_cast<int>(futurePos.x / tileSize);
-            int tileY = static_cast<int>(futurePos.y / tileSize);
-            if (tileX >= 0 && static_cast<size_t>(tileX) < mapData[0].size() && 
-                tileY >= 0 && static_cast<size_t>(tileY) < mapData.size() && 
-                mapData[tileY][tileX] == 1) {
-                sf::Vector2f wallCenter((tileX + 0.5f) * tileSize, (tileY + 0.5f) * tileSize);
-                return normalize(k.position - wallCenter) * k.maxAcceleration;
-            }
-            return sf::Vector2f(0, 0);
-        }
-    );
-
-    auto seekTargetAction = new ActionNode(
-        [this](const Kinematic& k, const Kinematic& t, const Kinematic& /*e*/, 
-               const std::vector<std::vector<int>>& /*map*/, int /*tileSize*/) -> sf::Vector2f {
-            return arrive->calculate(const_cast<Kinematic&>(k), const_cast<Kinematic&>(t));
-        }
-    );
-
-    // Create condition nodes
-    auto isNearEnemy = [this](const Kinematic& k, const Kinematic& /*t*/, const Kinematic& e, 
-                             const std::vector<std::vector<int>>& /*map*/, int /*tileSize*/) -> bool {
-        return length(k.position - e.position) < 200.0f;
+        return false;
     };
 
-    auto isNearWall = [this](const Kinematic& k, const Kinematic& /*t*/, const Kinematic& /*e*/, 
-                            const std::vector<std::vector<int>>& mapData, int tileSize) -> bool {
-        sf::Vector2f futurePos = k.position + normalize(k.velocity) * 50.0f;
-        int tileX = static_cast<int>(futurePos.x / tileSize);
-        int tileY = static_cast<int>(futurePos.y / tileSize);
-        return tileX >= 0 && static_cast<size_t>(tileX) < mapData[0].size() && 
-               tileY >= 0 && static_cast<size_t>(tileY) < mapData.size() && 
-               mapData[tileY][tileX] == 1;
-    };
+    auto pathDeviationNode = new PathDeviationNode();
+    auto normalPathNode = new ActionNode([this](const Kinematic& k, const Kinematic& t,
+                                              const Kinematic& e,
+                                              const std::vector<std::vector<int>>& map,
+                                              int size) -> sf::Vector2f {
+        // Normal path following behavior
+        return arrive->calculate(k, t);
+    });
 
-    // Build the decision tree
-    DecisionNode* wallOrTarget = new DecisionBranch(isNearWall, avoidWallAction, seekTargetAction);
-    decisionTree = new DecisionBranch(isNearEnemy, fleeEnemyAction, wallOrTarget);
+    auto pathChoice = new DecisionBranch(isPathBlocked, pathDeviationNode, normalPathNode);
+
+    // Add to your existing behavior tree
+    root = pathChoice;
 }
 // Helper functions implementation
 float boid::length(const sf::Vector2f& v) {
@@ -124,19 +109,26 @@ void boid::draw() {
     window->draw(sprite);
 }
 
-void boid::update(float deltaTime, const Kinematic& targetkin, const Kinematic& enemyKinematic) {
-    // Implement the update logic here
-    // This should include your steering behaviors
-    // Example:
-    sf::Vector2f steering = arrive->calculate(kinematic, const_cast<Kinematic&>(targetkin));
-    kinematic.velocity += steering * deltaTime;
+void boid::update(float dt, const Kinematic& targetKinematic) {
+    // Get normal steering behavior
+    sf::Vector2f steering = arrive->calculate(kinematic, targetKinematic);
+    
+    // Add boundary avoidance
+    sf::Vector2f boundaryForce = avoidBoundary();
+    steering += boundaryForce;
+    
+    // Apply steering
+    kinematic.velocity += steering * dt;
+    
+    // Clamp position to window bounds
+    kinematic.position.x = std::clamp(kinematic.position.x, 0.0f, WINDOW_WIDTH);
+    kinematic.position.y = std::clamp(kinematic.position.y, 0.0f, WINDOW_HEIGHT);
     
     // Limit speed
-    if (length(kinematic.velocity) > kinematic.maxSpeed) {
+    float speed = length(kinematic.velocity);
+    if (speed > kinematic.maxSpeed) {
         kinematic.velocity = normalize(kinematic.velocity) * kinematic.maxSpeed;
     }
-    
-    move(deltaTime);
 }
 
 void boid::updateWithEnemy(float dt, Kinematic targetKin, const Kinematic& enemyKin,

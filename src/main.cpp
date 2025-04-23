@@ -349,9 +349,16 @@ int vsPath() {
 
     // Initialize enemy boid kinematic
     Kinematic enemyKinematic;
+
     enemyKinematic.position = sf::Vector2f(500, 500);
-    enemyKinematic.velocity = sf::Vector2f(4.0f, 4.0f);
+    enemyKinematic.velocity = sf::Vector2f(0.0f, 0.0f);
     enemyKinematic.maxSpeed = 100.0f;
+    enemyKinematic.maxAcceleration = 200.0f;  // Increased for more responsive movement
+    enemyKinematic.maxRotation = 5.0f;
+    enemyKinematic.maxAngularAcceleration = 5.0f;
+    enemyKinematic.arrivalRadius = 30.0f;
+    enemyKinematic.slowRadius = 60.0f;
+    enemyKinematic.fleeRadius = 100.0f;
 
     // Create breadcrumbs
     std::vector<crumb> breadcrumbs;
@@ -421,6 +428,11 @@ int vsPath() {
     int currentTargetIndex = 0;
     const float positionTolerance = 10.0f;
 
+   // std::cout << "Path positions:" << std::endl;
+    for (const auto& pos : pathWorldPositions) {
+     //   std::cout << "(" << pos.x << ", " << pos.y << ")" << std::endl;
+    }
+
     while (window.isOpen()) {
         sf::Time deltaTime = clock.restart();
         float dt = deltaTime.asSeconds();
@@ -432,8 +444,6 @@ int vsPath() {
         }
 
         window.clear();
-
-        // Draw the map and path
         window.draw(pathVertices);
 
         // Update and draw breadcrumbs
@@ -444,53 +454,57 @@ int vsPath() {
         // Update and draw player boids
         for (auto& b : boids) {
             if (currentTargetIndex < pathWorldPositions.size()) {
-                // Set the current target position
-                  Kinematic targetKinematic;
+                // Debug current target
+              /*  std::cout << "Current target: " << currentTargetIndex 
+                         << " Position: (" << pathWorldPositions[currentTargetIndex].x 
+                         << ", " << pathWorldPositions[currentTargetIndex].y << ")" << std::endl;
+*/
+                // Set the current target position with all necessary parameters
+                Kinematic targetKinematic;
                 targetKinematic.position = pathWorldPositions[currentTargetIndex];
-                b->updateWithEnemy(dt, 
-                    Kinematic{
-                        pathWorldPositions[currentTargetIndex], // position
-                        sf::Vector2f(),     // velocity
-                        100.0f,            // maxSpeed
-                        100.0f,            // maxAcceleration
-                        5.0f,              // maxAngularAcceleration
-                        5.0f,              // maxRotation
-                        3.0f,              // arrivalRadius
-                        3.0f,              // slowRadius
-                        5.0f               // fleeRadius
-                    }, 
-                    enemyBoid.getKinematic(), 
-                    mapData, 
-                    tileSize
-                );
+                targetKinematic.maxSpeed = 100.0f;
+                targetKinematic.maxAcceleration = 100.0f;
+                targetKinematic.maxAngularAcceleration = 5.0f;
+                targetKinematic.maxRotation = 5.0f;
+                targetKinematic.arrivalRadius = 3.0f;
+                targetKinematic.slowRadius = 3.0f;
+                targetKinematic.fleeRadius = 5.0f;
 
-                // Check if the boid reached the current target
-                 // Check if the boid reached the current target
-               /*  if (b->reached(b->getPosition(), pathWorldPositions[currentTargetIndex])) {
+                // Update boid position and orientation
+                b->updateWithEnemy(dt, targetKinematic, enemyBoid.getKinematic(), mapData, tileSize);
+                
+                // Debug boid position
+                sf::Vector2f boidPosition = b->getPosition();
+               // std::cout << "Boid position: (" << boidPosition.x << ", " << boidPosition.y << ")" << std::endl;
+
+                // Check if reached target
+                float distance = std::sqrt(
+                    std::pow(boidPosition.x - targetKinematic.position.x, 2) +
+                    std::pow(boidPosition.y - targetKinematic.position.y, 2)
+                );
+//                std::cout << "Distance to target: " << distance << std::endl;
+
+                if (distance <= positionTolerance) {
                     currentTargetIndex++;
-                }*/
-                 sf::Vector2f boidPosition = b->getPosition();
-                 float distance = std::sqrt(std::pow(boidPosition.x - targetKinematic.position.x, 2) +
-                                            std::pow(boidPosition.y - targetKinematic.position.y, 2));
- 
-                 if (distance <= positionTolerance) {
-                     currentTargetIndex++;
-                     std::cout << currentTargetIndex << std::endl;
-                 }
+               //     std::cout << "Moving to next target: " << currentTargetIndex << std::endl;
+                }
             }
 
+            // Make sure to call move before draw
+            b->move(dt);
             b->draw();
         }
 
         // Update and draw the enemy boid
+        enemyBoid.update(dt, boids[0]->getKinematic(), mapData, tileSize, false);
         enemyBoid.move(dt);
         enemyBoid.draw();
 
-        // Display the contents of the window
         window.display();
     }
 
     return 0;
+
 }
 
 bool flock = false;
