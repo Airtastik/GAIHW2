@@ -8,7 +8,7 @@
 #include "game_constants.hpp"
 
 class EnemyBoid {
-private:
+protected:  // Change private to protected for inheritance
     sf::RenderWindow* window;
     Kinematic kinematic;
     std::vector<crumb>* breadcrumbs;
@@ -17,13 +17,12 @@ private:
     float crumbTimer;
     DecisionNode* root;
 
-    // Helper functions
-    float length(const sf::Vector2f& v);
-    sf::Vector2f normalize(const sf::Vector2f& v);
+    // Remove length and normalize declarations
+
+    // Make avoidBoundary() inline in header
     sf::Vector2f avoidBoundary() {
         sf::Vector2f steering(0, 0);
         
-        // Check each boundary
         if (kinematic.position.x < BOUNDARY_RADIUS)
             steering.x = kinematic.maxAcceleration;
         else if (kinematic.position.x > WINDOW_WIDTH - BOUNDARY_RADIUS)
@@ -38,14 +37,13 @@ private:
     }
 
 public:
-    // Constructor declaration only
     EnemyBoid(sf::RenderWindow* win, std::vector<crumb>* crumbs, Kinematic k);
-    ~EnemyBoid();
+    virtual ~EnemyBoid() = default;  // Add virtual destructor
 
     // Public interface methods
     Kinematic getKinematic() const { return kinematic; }
     void setKinematic(const Kinematic& kin) { kinematic = kin; }
-    void update(float dt, const Kinematic& boidKinematic, 
+    virtual void update(float dt, const Kinematic& boidKinematic,  // Add virtual keyword
                 const std::vector<std::vector<int>>& mapData, 
                 int tileSize, bool boidAtGoal);
     void move(float dt, const std::vector<std::vector<int>>& mapData);  // Updated signature

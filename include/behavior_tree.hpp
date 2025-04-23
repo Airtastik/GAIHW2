@@ -213,6 +213,107 @@ public:
         return (result == sf::Vector2f(0, 0)) ? sf::Vector2f(1, 1) : sf::Vector2f(0, 0); // Invert the result
     }
 };
+
+// Random Decorator Node
+class RandomNode : public DecisionNode {
+private:
+    DecisionNode* child;
+    float probability;  // Probability of executing child node
+
+public:
+    RandomNode(DecisionNode* node, float prob = 0.5f) 
+        : child(node), probability(prob) {}
+    
+    ~RandomNode() override {
+        delete child;
+    }
+
+    sf::Vector2f makeDecision(const Kinematic& kinematic, 
+                             const Kinematic& targetKinematic,
+                             const Kinematic& enemyKinematic,
+                             const std::vector<std::vector<int>>& mapData,
+                             int tileSize) override {
+        if (static_cast<float>(rand()) / RAND_MAX < probability) {
+            return child->makeDecision(kinematic, targetKinematic, 
+                                     enemyKinematic, mapData, tileSize);
+        }
+        return sf::Vector2f(0, 0);  // Don't execute child
+    }
+};
+
+// Repeater Decorator Node
+class RepeaterNode : public DecisionNode {
+private:
+    DecisionNode* child;
+    int numRepeats;
+    int currentRepeat = 0;
+
+public:
+    RepeaterNode(DecisionNode* node, int repeats) 
+        : child(node), numRepeats(repeats) {}
+    
+    ~RepeaterNode() override {
+        delete child;
+    }
+
+    sf::Vector2f makeDecision(const Kinematic& kinematic, 
+                             const Kinematic& targetKinematic,
+                             const Kinematic& enemyKinematic,
+                             const std::vector<std::vector<int>>& mapData,
+                             int tileSize) override {
+        if (currentRepeat < numRepeats) {
+            currentRepeat++;
+            return child->makeDecision(kinematic, targetKinematic, 
+                                     enemyKinematic, mapData, tileSize);
+        }
+        currentRepeat = 0;  // Reset for next time
+        return sf::Vector2f(0, 0);
+    }
+};
+
+// Parallel Node - Executes all children simultaneously
+class ParallelNode : public DecisionNode {
+private:
+    std::vector<DecisionNode*> children;
+    bool requireAllSuccess;  // If true, all children must succeed
+
+public:
+    ParallelNode(const std::vector<DecisionNode*>& nodes, bool allMustSucceed = false) 
+        : children(nodes), requireAllSuccess(allMustSucceed) {}
+    
+    ~ParallelNode() override {
+        for (auto child : children) {
+            delete child;
+        }
+    }
+
+    sf::Vector2f makeDecision(const Kinematic& kinematic, 
+                             const Kinematic& targetKinematic,
+                             const Kinematic& enemyKinematic,
+                             const std::vector<std::vector<int>>& mapData,
+                             int tileSize) override {
+        sf::Vector2f resultForce(0, 0);
+        int successCount = 0;
+
+        for (auto child : children) {
+            sf::Vector2f result = child->makeDecision(kinematic, targetKinematic, 
+                                                    enemyKinematic, mapData, tileSize);
+            if (result != sf::Vector2f(0, 0)) {
+                successCount++;
+                resultForce += result;  // Combine forces from all children
+            }
+        }
+
+        // Return combined force if success criteria met
+        if ((requireAllSuccess && successCount == children.size()) ||
+            (!requireAllSuccess && successCount > 0)) {
+            return resultForce / static_cast<float>(children.size());  // Average the forces
+        }
+        
+        return sf::Vector2f(0, 0);
+    }
+};
+
 // Add after the InverterNode class but before the final #endif
 class EnemyAvoidanceNode : public DecisionNode {
     private:

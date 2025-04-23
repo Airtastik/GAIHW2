@@ -7,6 +7,8 @@
 #include "steering.hpp"
 #include "crumb.hpp"
 #include "game_constants.hpp"
+#include "behavior_tree.hpp"  // Include complete type definition
+#include "utils.hpp"  // Include utility functions
 
 // Forward declarations
 class EnemyBoid;
@@ -36,22 +38,29 @@ public:
     void buildDecisionTree();
 
 private:
-    bool isActive = true;
-    int crumb_idx;
-    int target_idx;
-    float drop_timer;
-    float speed;
+    // Add safety checks for decision tree
+    bool hasValidDecisionTree() const {
+        return decisionTree != nullptr && window != nullptr && breadcrumbs != nullptr;
+    }
 
-    sf::Sprite sprite;
-    sf::RenderWindow* window;
-    std::vector<crumb>* breadcrumbs;
-    DecisionNode* decisionTree;  // Now DecisionNode is recognized
-    std::vector<std::vector<int>> mapData{10, std::vector<int>(10, 0)}; // Initialize with size
+    // Make sure this is first in the private section
+    sf::RenderWindow* window = nullptr;
+    std::vector<crumb>* breadcrumbs = nullptr;
+    DecisionNode* decisionTree = nullptr;
+    Arrive* arrive = nullptr;
+    Align* align = nullptr;
     
+    // Reorder member variables to match initialization order
+    sf::Sprite sprite;
     Kinematic kinematic;
     Kinematic targetKinematic;
-    Arrive* arrive;
-    Align* align;
+    std::vector<std::vector<int>> mapData{10, std::vector<int>(10, 0)};
+    
+    bool isActive = true;
+    int crumb_idx = 0;
+    int target_idx = 0;
+    float drop_timer = 0.0f;
+    float speed = 0.0f;
 
     const sf::Vector2f TOP_LEFT = sf::Vector2f(100, 100);
     const sf::Vector2f TOP_RIGHT = sf::Vector2f(900, 100);
@@ -94,7 +103,84 @@ private:
             }
         }
         return false;
+    }
+
+    // Add new helper methods
+    sf::Vector2f dodgeEnemy(const Kinematic& enemyKinematic) {
+        sf::Vector2f toEnemy = enemyKinematic.position - kinematic.position;
+        sf::Vector2f perpendicular(-toEnemy.y, toEnemy.x);  // Get perpendicular vector
+        return normalize(perpendicular) * kinematic.maxAcceleration;
+    }
+
+    sf::Vector2f slowDown() {
+        return -normalize(kinematic.velocity) * kinematic.maxAcceleration * 0.5f;
+    }
+
+    // Add random behavior options
+    sf::Vector2f randomFlank() {
+        static float direction = 1.0f;  // 1 for right, -1 for left
+        static float lastChangeTime = 0.0f;
+        
+        // Randomly change direction every ~0.5-1.5 seconds
+        float currentTime = clock.getElapsedTime().asSeconds();
+        if (currentTime - lastChangeTime > (0.5f + (rand() % 1000) / 1000.0f)) {
+            direction = (rand() % 2) * 2.0f - 1.0f;  // Random -1 or 1
+            lastChangeTime = currentTime;
         }
-        };
+        
+        if (length(kinematic.velocity) < 0.1f) {
+            return sf::Vector2f(direction * kinematic.maxAcceleration, 0);
+        }
+        
+        sf::Vector2f perpendicular(-kinematic.velocity.y, kinematic.velocity.x);
+        return normalize(perpendicular) * direction * kinematic.maxAcceleration;
+    }
+
+    sf::Vector2f randomDodge() {
+        // Random angle between -45 and 45 degrees
+        float angle = (rand() % 90 - 45) * M_PI / 180.0f;
+        sf::Vector2f dir(std::cos(angle), std::sin(angle));
+        return dir * kinematic.maxAcceleration * 2.0f;
+    }
+
+    sf::Vector2f randomBurst() {
+        static bool bursting = false;
+        static float burstTimer = 0.0f;
+        
+        if (!bursting && (rand() % 100 < 10)) {  // 10% chance to start burst
+            bursting = true;
+            burstTimer = 0.5f;  // Burst for 0.5 seconds
+        }
+        
+        if (bursting) {
+            burstTimer -= clock.restart().asSeconds();
+            if (burstTimer <= 0) {
+                bursting = false;
+            }
+            return normalize(kinematic.velocity) * kinematic.maxAcceleration * 3.0f;
+        }
+        
+        return sf::Vector2f(0, 0);
+    }
+    
+    sf::Clock clock;  // Add clock member variable
+
+    // Add safety check method
+    bool isValid() const {
+        return window != nullptr && breadcrumbs != nullptr;
+    }
+
+    // Add memory cleanup method
+    void cleanup() {
+        if (decisionTree) {
+            delete decisionTree;
+            decisionTree = nullptr;
+        }
+        delete arrive;
+        arrive = nullptr;
+        delete align;
+        align = nullptr;
+    }
+};
 
 #endif // BOID_HPP

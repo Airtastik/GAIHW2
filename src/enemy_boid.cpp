@@ -1,41 +1,25 @@
 #include "enemy_boid.hpp"
+#include "utils.hpp"
 #include <cmath>
 
-// Helper functions implementation
-float EnemyBoid::length(const sf::Vector2f& v) {
-    return std::sqrt(v.x * v.x + v.y * v.y);
-}
-
-sf::Vector2f EnemyBoid::normalize(const sf::Vector2f& v) {
-    float len = length(v);
-    if (len > 0) {
-        return sf::Vector2f(v.x / len, v.y / len);
-    }
-    return v;
-}
+// Remove length and normalize function declarations in the header and use utils.hpp instead
 
 sf::Vector2f EnemyBoid::chaseBoid(const Kinematic& boidKinematic) {
     // Calculate direction to player boid
     sf::Vector2f direction = boidKinematic.position - kinematic.position;
-    float distance = length(direction);
+    float dist = length(direction);  // Using utils.hpp function
     
     // Increase chase radius from 300 to 500
-    if (distance < 500.0f) { // Chase radius increased
-        // Calculate desired velocity (at max speed toward player)
-        sf::Vector2f desiredVelocity = normalize(direction) * kinematic.maxSpeed;
-        
-        // Calculate steering force
+    if (dist < 500.0f) {
+        sf::Vector2f desiredVelocity = normalize(direction) * kinematic.maxSpeed; // Using utils.hpp function
         sf::Vector2f steeringForce = desiredVelocity - kinematic.velocity;
         
-        // Limit steering force to max acceleration
-        float steeringMagnitude = length(steeringForce);
+        float steeringMagnitude = length(steeringForce); // Using utils.hpp function
         if (steeringMagnitude > kinematic.maxAcceleration) {
-            steeringForce = normalize(steeringForce) * kinematic.maxAcceleration;
+            steeringForce = normalize(steeringForce) * kinematic.maxAcceleration; // Using utils.hpp function
         }
-        
         return steeringForce;
     }
-    
     return sf::Vector2f(0, 0);
 }
 
@@ -68,64 +52,36 @@ sf::Vector2f EnemyBoid::avoidWall(const std::vector<std::vector<int>>& mapData, 
 
 void EnemyBoid::update(float dt, const Kinematic& boidKinematic, 
     const std::vector<std::vector<int>>& mapData, 
-    int tileSize, bool boidAtGoal) {
+    int tileSize, [[maybe_unused]] bool boidAtGoal) {
     
     if (!root) return;
     
-    // Calculate steering force with null checks
+    // Calculate steering force without wall avoidance
     sf::Vector2f steering = root->makeDecision(kinematic, boidKinematic, kinematic, mapData, tileSize);
     
-    // Add boundary avoidance
+    // Add boundary avoidance only
     sf::Vector2f boundaryForce = avoidBoundary();
     steering += boundaryForce;
     
-    // Apply steering directly without limiting the time step
     kinematic.velocity += steering * dt;
     
-    // Only limit the final speed
+    // Limit speed
     float currentSpeed = length(kinematic.velocity);
     if (currentSpeed > kinematic.maxSpeed) {
         kinematic.velocity = normalize(kinematic.velocity) * kinematic.maxSpeed;
     }
 
-    // Update position
-    kinematic.position += kinematic.velocity * dt;
-
-    // Update move call to include mapData
     move(dt, mapData);
 }
 
 void EnemyBoid::draw() {
     window->draw(shape);
 }
-void EnemyBoid::move(float dt, const std::vector<std::vector<int>>& mapData) {
-    // Early return if map data is invalid
-    if (mapData.empty() || mapData[0].empty()) {
-        // Just do basic movement without wall collision
-        kinematic.position += kinematic.velocity * dt;
-        return;
-    }
-    
-    // Save previous position
-    sf::Vector2f prevPosition = kinematic.position;
-    
-    // Update position
+void EnemyBoid::move(float dt, const std::vector<std::vector<int>>& /*mapData*/) {
+    // Simple movement without wall collisions
     kinematic.position += kinematic.velocity * dt;
     
-    // Get tile positions with bounds checking
-    int tileX = static_cast<int>(kinematic.position.x / 100);
-    int tileY = static_cast<int>(kinematic.position.y / 100);
-    
-    if (tileX >= 0 && tileX < static_cast<int>(mapData[0].size()) && 
-        tileY >= 0 && tileY < static_cast<int>(mapData.size())) {
-        
-        if (mapData[tileY][tileX] == 1) {
-            kinematic.position = prevPosition;
-            kinematic.velocity = -kinematic.velocity * 0.8f;
-        }
-    }
-    
-    // Bounce off window boundaries
+    // Bounce off window boundaries with velocity reflection
     if (kinematic.position.x < 0) {
         kinematic.position.x = 0;
         kinematic.velocity.x = -kinematic.velocity.x;
@@ -178,13 +134,6 @@ EnemyBoid::EnemyBoid(sf::RenderWindow* win, std::vector<crumb>* crumbs, Kinemati
     buildBehaviorTree();
 }
 
-EnemyBoid::~EnemyBoid() {
-    if (root) {
-        delete root;
-        root = nullptr;
-    }
-}
-
 void EnemyBoid::buildBehaviorTree() {
     // Delete old tree if it exists
     if (root) {
@@ -207,13 +156,6 @@ void EnemyBoid::buildBehaviorTree() {
         }
     );
 
-    auto goToCenterAction = new ActionNode(
-        [this](const Kinematic& /*k*/, const Kinematic& /*t*/, const Kinematic& /*e*/,
-               const std::vector<std::vector<int>>& /*map*/, int /*tileSize*/) -> sf::Vector2f {
-            return goToCenter();
-        }
-    );
-
     auto avoidWallAction = new ActionNode(
         [this]([[maybe_unused]] const Kinematic& k, 
                const Kinematic& /*t*/, 
@@ -223,6 +165,8 @@ void EnemyBoid::buildBehaviorTree() {
             return avoidWall(mapData, tileSize);
         }
     );
+
+    // Remove unused goToCenterAction
 
     // Create condition nodes
     auto isNearWall = [this](const Kinematic& k, const Kinematic& /*t*/, const Kinematic& /*e*/,

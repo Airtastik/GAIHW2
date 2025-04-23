@@ -13,7 +13,7 @@ FetchContent_Declare(SFML
     SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-add_executable(main src/Main.cpp src/path.cpp)
+add_executable(main src/Main.cpp src/path.cpp src/learned_behavior.cpp src/learning_enemy.cpp)
 target_link_libraries(main PRIVATE sfml-graphics)
 target_compile_features(main PRIVATE cxx_std_17)
 

@@ -1,6 +1,7 @@
 #include "boid.hpp"
 #include "enemy_boid.hpp"
 #include "behavior_tree.hpp"
+#include "utils.hpp"
 #include <cmath>
 
 #ifndef M_PI
@@ -8,74 +9,83 @@
 #endif
 
 boid::boid(sf::RenderWindow* w, sf::Texture& tex, std::vector<crumb>* crumbs, Kinematic boidKin)
-    : arrive(new Arrive()), align(new Align()), decisionTree(nullptr)  // Initialize decisionTree
+    : window(w)
+    , breadcrumbs(crumbs)
+    , kinematic(boidKin)
+    , arrive(new Arrive())
+    , align(new Align())
+    , decisionTree(nullptr)  // Explicitly initialize decisionTree
 {
-    window = w;
-    kinematic = boidKin;
-    speed = 1.0f;
-    drop_timer = 100.f;
-    crumb_idx = 0;
-    target_idx = 0;
+    if (!window || !breadcrumbs) {
+        throw std::runtime_error("Invalid window or breadcrumbs pointer");
+    }
+
     sprite.setTexture(tex);
     sprite.setScale(0.02f, 0.02f);
-    breadcrumbs = crumbs;
     sprite.setPosition(kinematic.position);
     
-    // Initialize decision tree
-    buildDecisionTree();
+    buildDecisionTree();  // Build the tree after everything is initialized
 }
 
 boid::~boid() {
-    delete arrive;
-    delete align;
-    if (decisionTree) {
-        delete decisionTree;
-        decisionTree = nullptr;
-    }
+    cleanup();
 }
 
 // Other methods remain unchanged...
 
 // Build the decision tree for intelligent behavior
 void boid::buildDecisionTree() {
-    // Delete old tree if it exists
-    if (decisionTree) {
-        delete decisionTree;
+    cleanup();  // Clean up old tree first
+    
+    try {
+        const float ENEMY_DETECTION_RADIUS = 200.0f;
+        const float ENEMY_CLOSE_RADIUS = 100.0f;
+        
+        // Create basic follow behavior
+        auto normalNode = new ActionNode(
+            [this](const Kinematic& k, const Kinematic& t,
+                   const Kinematic& /*e*/,
+                   const std::vector<std::vector<int>>& /*map*/,
+                   int /*tileSize*/) -> sf::Vector2f {
+                return arrive->calculate(k, t);
+            }
+        );
+
+        // Create evasive behavior with random options
+        auto evasiveNode = new ActionNode(
+            [this](const Kinematic& k, const Kinematic& /*t*/,
+                   const Kinematic& e,
+                   const std::vector<std::vector<int>>& /*map*/,
+                   int /*tileSize*/) -> sf::Vector2f {
+                // Random choice between different evasive maneuvers
+                int choice = rand() % 3;
+                switch(choice) {
+                    case 0: return randomFlank();
+                    case 1: return randomDodge();
+                    case 2: return randomBurst();
+                    default: return randomFlank();
+                }
+            }
+        );
+
+        // Build decision tree
+        decisionTree = new DecisionBranch(
+            [ENEMY_DETECTION_RADIUS](const Kinematic& k, const Kinematic& /*t*/,
+                                   const Kinematic& e,
+                                   const std::vector<std::vector<int>>& /*map*/,
+                                   int /*tileSize*/) -> bool {
+                float dist = ::length(e.position - k.position);
+                return dist < ENEMY_DETECTION_RADIUS;
+            },
+            evasiveNode,  // If enemy detected, evade
+            normalNode    // Otherwise, follow path
+        );
+    } catch (const std::exception& e) {
+        std::cerr << "Error building decision tree: " << e.what() << std::endl;
         decisionTree = nullptr;
     }
-    
-    const float ENEMY_DETECTION_RADIUS = 50.0f; // Move constant definition here
-    
-    // Check if enemy is too close
-    auto isEnemyNearby = [ENEMY_DETECTION_RADIUS](const Kinematic& k, const Kinematic& /*t*/,
-                           const Kinematic& e,
-                           const std::vector<std::vector<int>>& /*map*/,
-                           int /*tileSize*/) -> bool {
-        sf::Vector2f toEnemy = e.position - k.position;
-        float distSq = toEnemy.x * toEnemy.x + toEnemy.y * toEnemy.y;
-        return distSq < ENEMY_DETECTION_RADIUS * ENEMY_DETECTION_RADIUS;
-    };
-
-    // Create behavior nodes
-    auto enemyAvoidNode = new EnemyAvoidanceNode();
-    auto pathNode = new PathDeviationNode();
-    auto normalNode = new ActionNode(
-        [this](const Kinematic& k, const Kinematic& t,
-               [[maybe_unused]] const Kinematic& e,
-               [[maybe_unused]] const std::vector<std::vector<int>>& map,
-               [[maybe_unused]] int size) -> sf::Vector2f {
-            return arrive->calculate(k, t);
-        }
-    );
-
-    // Build the tree
-    decisionTree = new DecisionBranch(isEnemyNearby, 
-                                     enemyAvoidNode,  // If enemy is near, avoid
-                                     new DecisionBranch(isPathBlocked,
-                                                      pathNode,    // If path blocked, deviate
-                                                      normalNode   // Otherwise normal movement
-                                     ));
 }
+
 // Helper functions implementation
 float boid::length(const sf::Vector2f& v) {
     return std::sqrt(v.x * v.x + v.y * v.y);
@@ -200,28 +210,34 @@ void boid::update(float dt, const Kinematic& targetKinematic, [[maybe_unused]] c
 
 void boid::updateWithEnemy(float dt, Kinematic targetKin, const Kinematic& enemyKin,
                           const std::vector<std::vector<int>>& newMapData, int tileSize) {
-    if (!decisionTree) return;
+    if (!hasValidDecisionTree()) {
+        buildDecisionTree();  // Try to rebuild if invalid
+        if (!hasValidDecisionTree()) {
+            return;  // Give up if still invalid
+        }
+    }
 
     try {
-        // Deep copy the map data
-        mapData.resize(newMapData.size());
-        for (size_t i = 0; i < newMapData.size(); ++i) {
-            mapData[i] = newMapData[i];
-        }
-
-        // Calculate steering
+        mapData = newMapData;
+        
+        // Get steering from decision tree with safety check
         sf::Vector2f steering = decisionTree->makeDecision(kinematic, targetKin, enemyKin, mapData, tileSize);
         
-        // Apply steering
-        kinematic.velocity += steering * dt;
-        
-        // Limit speed
-        float currentSpeed = length(kinematic.velocity);
-        if (currentSpeed > kinematic.maxSpeed) {
-            kinematic.velocity = normalize(kinematic.velocity) * kinematic.maxSpeed;
-        }
+        // Add boundary avoidance
+        steering += avoidBoundary();
 
-        move(dt);
+        // Update velocity with safety checks
+        if (dt > 0 && dt < 1.0f) {
+            kinematic.velocity += steering * dt;
+            
+            // Limit speed
+            float currentSpeed = ::length(kinematic.velocity);
+            if (currentSpeed > kinematic.maxSpeed) {
+                kinematic.velocity = ::normalize(kinematic.velocity) * kinematic.maxSpeed;
+            }
+
+            move(dt);
+        }
     } catch (const std::exception& e) {
         std::cerr << "Error in updateWithEnemy: " << e.what() << std::endl;
     }
