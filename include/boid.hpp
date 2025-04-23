@@ -6,13 +6,11 @@
 #include <cmath>
 #include "steering.hpp"
 #include "crumb.hpp"
+#include "game_constants.hpp"
 
 // Forward declarations
 class EnemyBoid;
 class DecisionNode;  // Add forward declaration for DecisionNode
-static const float WINDOW_WIDTH = 1000.0f;
-static const float WINDOW_HEIGHT = 1000.0f;
-static const float BOUNDARY_RADIUS = 50.0f;
 
 class boid {
 public:
@@ -21,10 +19,7 @@ public:
     ~boid();
     void executeDecisionTree(const Kinematic& enemyKinematic, const std::vector<std::vector<int>>& mapData, int tileSize);
     void draw();
-    void update(float deltaTime, const Kinematic& targetkin) {
-        update(deltaTime, targetkin, Kinematic()); // Pass default enemy kinematic
-    }
-    
+    void update(float deltaTime, const Kinematic& targetkin);
     void update(float deltaTime, const Kinematic& targetkin, const Kinematic& enemyKinematic);
     void updateWithEnemy(float deltaTime, Kinematic targetkin, const Kinematic& enemyKinematic, 
                          const std::vector<std::vector<int>>& mapData, int tileSize);
@@ -51,9 +46,7 @@ private:
     sf::RenderWindow* window;
     std::vector<crumb>* breadcrumbs;
     DecisionNode* decisionTree;  // Now DecisionNode is recognized
-    DecisionNode* root;
-
-
+    
     Kinematic kinematic;
     Kinematic targetKinematic;
     Arrive* arrive;

@@ -19,8 +19,8 @@ sf::Vector2f EnemyBoid::chaseBoid(const Kinematic& boidKinematic) {
     sf::Vector2f direction = boidKinematic.position - kinematic.position;
     float distance = length(direction);
     
-    // Only chase if within certain range
-    if (distance < 300.0f) { // Chase radius
+    // Increase chase radius from 300 to 500
+    if (distance < 500.0f) { // Chase radius increased
         // Calculate desired velocity (at max speed toward player)
         sf::Vector2f desiredVelocity = normalize(direction) * kinematic.maxSpeed;
         
@@ -67,49 +67,94 @@ sf::Vector2f EnemyBoid::avoidWall(const std::vector<std::vector<int>>& mapData, 
 }
 
 void EnemyBoid::update(float dt, const Kinematic& boidKinematic, 
-    [[maybe_unused]] const std::vector<std::vector<int>>& mapData, 
-    [[maybe_unused]] int tileSize, 
-    [[maybe_unused]] bool boidAtGoal) {
-// Calculate steering force
-sf::Vector2f steering = root->makeDecision(kinematic, boidKinematic, kinematic, mapData, tileSize);
+    const std::vector<std::vector<int>>& mapData, 
+    int tileSize, bool boidAtGoal) {
+    
+    if (!root) return;
+    
+    // Calculate steering force with null checks
+    sf::Vector2f steering = root->makeDecision(kinematic, boidKinematic, kinematic, mapData, tileSize);
     
     // Add boundary avoidance
     sf::Vector2f boundaryForce = avoidBoundary();
     steering += boundaryForce;
     
-    // Apply steering to velocity
+    // Apply steering directly without limiting the time step
     kinematic.velocity += steering * dt;
     
-    // Clamp position to window bounds
-    kinematic.position.x = std::clamp(kinematic.position.x, 0.0f, WINDOW_WIDTH);
-    kinematic.position.y = std::clamp(kinematic.position.y, 0.0f, WINDOW_HEIGHT);
-    
-    // Limit speed
+    // Only limit the final speed
     float currentSpeed = length(kinematic.velocity);
     if (currentSpeed > kinematic.maxSpeed) {
         kinematic.velocity = normalize(kinematic.velocity) * kinematic.maxSpeed;
     }
-// Update position
-//kinematic.position += kinematic.velocity * dt;
 
-// Debug output
-std::cout << "Enemy position: (" << kinematic.position.x << ", " << kinematic.position.y << ")\n";
-std::cout << "Enemy velocity: (" << kinematic.velocity.x << ", " << kinematic.velocity.y << ")\n";
-std::cout << "Enemy steering: (" << steering.x << ", " << steering.y << ")\n";
+    // Update position
+    kinematic.position += kinematic.velocity * dt;
+
+    // Update move call to include mapData
+    move(dt, mapData);
 }
 
 void EnemyBoid::draw() {
     window->draw(shape);
 }
-void EnemyBoid::move([[maybe_unused]] float dt) {
-    // Update shape position
+void EnemyBoid::move(float dt, const std::vector<std::vector<int>>& mapData) {
+    // Save previous position for wall collision check
+    sf::Vector2f prevPosition = kinematic.position;
+    
+    // Check for wall collisions in the map
+    int tileX = static_cast<int>(kinematic.position.x / 100); // assuming tileSize is 100
+    int tileY = static_cast<int>(kinematic.position.y / 100);
+    
+    // If we hit a wall tile, bounce back
+    if (tileX >= 0 && tileX < 10 && tileY >= 0 && tileY < 10) {  // assuming 10x10 map
+        if (mapData[tileY][tileX] == 1) {  // Wall collision
+            kinematic.position = prevPosition;
+            
+            // Calculate normal vector for the wall (simplified to cardinal directions)
+            sf::Vector2f normal(0, 0);
+            if (kinematic.velocity.x > 0) normal.x = -1;
+            if (kinematic.velocity.x < 0) normal.x = 1;
+            if (kinematic.velocity.y > 0) normal.y = -1;
+            if (kinematic.velocity.y < 0) normal.y = 1;
+            
+            // Reflect velocity
+            sf::Vector2f reflect = kinematic.velocity;
+            if (normal.x != 0) reflect.x = -kinematic.velocity.x;
+            if (normal.y != 0) reflect.y = -kinematic.velocity.y;
+            kinematic.velocity = reflect;
+        }
+    }
+
+    // Update position
+    kinematic.position += kinematic.velocity * dt;
+
+    // Bounce off window boundaries
+    if (kinematic.position.x < 0) {
+        kinematic.position.x = 0;
+        kinematic.velocity.x = -kinematic.velocity.x;
+    } else if (kinematic.position.x > WINDOW_WIDTH) {
+        kinematic.position.x = WINDOW_WIDTH;
+        kinematic.velocity.x = -kinematic.velocity.x;
+    }
+    
+    if (kinematic.position.y < 0) {
+        kinematic.position.y = 0;
+        kinematic.velocity.y = -kinematic.velocity.y;
+    } else if (kinematic.position.y > WINDOW_HEIGHT) {
+        kinematic.position.y = WINDOW_HEIGHT;
+        kinematic.velocity.y = -kinematic.velocity.y;
+    }
+
+    // Update shape position and orientation
     shape.setPosition(kinematic.position);
     
-    // Update orientation if moving
     if (length(kinematic.velocity) > 0.1f) {
         float angle = std::atan2(kinematic.velocity.y, kinematic.velocity.x);
         shape.setRotation(angle * 180.0f / 3.14159f);
     }
+
+    shape.setOrigin(0, 0);
 }
 
 // Make sure to define M_PI if not already defined
@@ -123,13 +168,13 @@ EnemyBoid::EnemyBoid(sf::RenderWindow* win, std::vector<crumb>* crumbs, Kinemati
     , breadcrumbs(crumbs)
     , currentCrumb(0)
     , crumbTimer(0)
-    , root(nullptr)
+    , root(nullptr)  // Initialize root to nullptr
 {
-    // Initialize shape
+    // Initialize shape with larger size
     shape.setPointCount(3);
-    shape.setPoint(0, sf::Vector2f(0, -10));  // Top
-    shape.setPoint(1, sf::Vector2f(-10, 10)); // Bottom left
-    shape.setPoint(2, sf::Vector2f(10, 10));  // Bottom right
+    shape.setPoint(0, sf::Vector2f(0, -20));    // Top (doubled from -10)
+    shape.setPoint(1, sf::Vector2f(-20, 20));   // Bottom left (doubled from -10, 10)
+    shape.setPoint(2, sf::Vector2f(20, 20));    // Bottom right (doubled from 10, 10)
     shape.setFillColor(sf::Color::Red);
     shape.setPosition(kinematic.position);
     shape.setOrigin(0, 0);
@@ -137,14 +182,32 @@ EnemyBoid::EnemyBoid(sf::RenderWindow* win, std::vector<crumb>* crumbs, Kinemati
     buildBehaviorTree();
 }
 
+EnemyBoid::~EnemyBoid() {
+    if (root) {
+        delete root;
+        root = nullptr;
+    }
+}
+
 void EnemyBoid::buildBehaviorTree() {
+    // Delete old tree if it exists
+    if (root) {
+        delete root;
+        root = nullptr;
+    }
+    
     // Create action nodes
+    auto wanderAction = new ActionNode(
+        [this](const Kinematic& /*k*/, const Kinematic& /*t*/, const Kinematic& /*e*/,
+               const std::vector<std::vector<int>>& /*map*/, int /*tileSize*/) -> sf::Vector2f {
+            return wander();
+        }
+    );
+
     auto chaseBoidAction = new ActionNode(
         [this](const Kinematic& /*k*/, const Kinematic& t, const Kinematic& /*e*/,
                const std::vector<std::vector<int>>& /*map*/, int /*tileSize*/) -> sf::Vector2f {
-            sf::Vector2f result = chaseBoid(t);
-            //std::cout << "Chase steering: (" << result.x << ", " << result.y << ")" << std::endl;
-            return result;
+            return chaseBoid(t);
         }
     );
 
@@ -178,15 +241,11 @@ void EnemyBoid::buildBehaviorTree() {
 
     auto isNearBoid = [this](const Kinematic& k, const Kinematic& t, const Kinematic& /*e*/,
                             const std::vector<std::vector<int>>& /*map*/, int /*tileSize*/) -> bool {
-        return length(k.position - t.position) < 300.0f;  // Detection radius
+        return length(k.position - t.position) < 500.0f;  // Detection radius increased from 300 to 500
     };
 
     // Build the behavior tree
     DecisionNode* wallOrChase = new DecisionBranch(isNearWall, avoidWallAction, chaseBoidAction);
-    root = new DecisionBranch(isNearBoid, wallOrChase, goToCenterAction);
-}
-
-// Add destructor to clean up the behavior tree
-EnemyBoid::~EnemyBoid() {
-    delete root;
+    // If boid is near, chase or avoid walls, otherwise wander
+    root = new DecisionBranch(isNearBoid, wallOrChase, wanderAction);
 }

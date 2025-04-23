@@ -86,8 +86,8 @@ class PathDeviationNode : public DecisionNode {
     
     public:
         sf::Vector2f makeDecision(const Kinematic& kinematic, 
-                                 const Kinematic& targetKinematic,
-                                 const Kinematic& enemyKinematic,
+                                 [[maybe_unused]] const Kinematic& targetKinematic,
+                                 [[maybe_unused]] const Kinematic& enemyKinematic,
                                  const std::vector<std::vector<int>>& mapData,
                                  int tileSize) override {
             return findAlternativePath(kinematic.position, mapData, tileSize);
@@ -147,6 +147,12 @@ private:
 
 public:
     SequenceNode(const std::vector<DecisionNode*>& nodes) : children(nodes) {}
+    
+    ~SequenceNode() override {
+        for (auto child : children) {
+            delete child;
+        }
+    }
 
     sf::Vector2f makeDecision(const Kinematic& kinematic, const Kinematic& targetKinematic, 
                               const Kinematic& enemyKinematic, const std::vector<std::vector<int>>& mapData,
@@ -168,6 +174,12 @@ private:
 
 public:
     SelectorNode(const std::vector<DecisionNode*>& nodes) : children(nodes) {}
+    
+    ~SelectorNode() override {
+        for (auto child : children) {
+            delete child;
+        }
+    }
 
     sf::Vector2f makeDecision(const Kinematic& kinematic, const Kinematic& targetKinematic, 
                               const Kinematic& enemyKinematic, const std::vector<std::vector<int>>& mapData,
@@ -189,6 +201,10 @@ private:
 
 public:
     InverterNode(DecisionNode* node) : child(node) {}
+    
+    ~InverterNode() override {
+        delete child;
+    }
 
     sf::Vector2f makeDecision(const Kinematic& kinematic, const Kinematic& targetKinematic, 
                               const Kinematic& enemyKinematic, const std::vector<std::vector<int>>& mapData,
@@ -244,22 +260,11 @@ class EnemyAvoidanceNode : public DecisionNode {
     
     public:
         sf::Vector2f makeDecision(const Kinematic& kinematic, 
-                                 const Kinematic& targetKinematic,
+                                 [[maybe_unused]] const Kinematic& targetKinematic,
                                  const Kinematic& enemyKinematic,
                                  const std::vector<std::vector<int>>& mapData,
                                  int tileSize) override {
-            sf::Vector2f avoidancePoint = findAvoidancePoint(kinematic, enemyKinematic, mapData, tileSize);
-            
-            // Calculate steering to avoidance point
-            sf::Vector2f desired = avoidancePoint - kinematic.position;
-            float distance = std::sqrt(desired.x * desired.x + desired.y * desired.y);
-            
-            if (distance > 0) {
-                desired = (desired / distance) * kinematic.maxSpeed;
-                return desired - kinematic.velocity;
-            }
-            
-            return sf::Vector2f(0, 0);
+            return findAvoidancePoint(kinematic, enemyKinematic, mapData, tileSize);
         }
     };
 

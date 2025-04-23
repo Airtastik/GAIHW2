@@ -344,18 +344,17 @@ int vsPath() {
     Kinematic boidKinematic;
     boidKinematic.position = sf::Vector2f(0, 0);
     boidKinematic.velocity = sf::Vector2f(0.0f, 0.0f);
-    boidKinematic.maxSpeed = 60.0f;
-    boidKinematic.maxAcceleration = 100.0f;
+    boidKinematic.maxSpeed = 200.0f;         // Increased from 200.0f
+    boidKinematic.maxAcceleration = 100.0f;  // Increased from 100.0f
 
     // Initialize enemy boid kinematic
     Kinematic enemyKinematic;
-
     enemyKinematic.position = sf::Vector2f(500, 500);
     enemyKinematic.velocity = sf::Vector2f(0.0f, 0.0f);
-    enemyKinematic.maxSpeed = 100.0f;
-    enemyKinematic.maxAcceleration = 200.0f;  // Increased for more responsive movement
-    enemyKinematic.maxRotation = 5.0f;
-    enemyKinematic.maxAngularAcceleration = 5.0f;
+    enemyKinematic.maxSpeed = 300.0f;         // Increased from 300.0f
+    enemyKinematic.maxAcceleration = 150.0f;  // Increased from 100.0f
+    enemyKinematic.maxRotation = 90.0f;
+    enemyKinematic.maxAngularAcceleration = 50.0f;
     enemyKinematic.arrivalRadius = 30.0f;
     enemyKinematic.slowRadius = 60.0f;
     enemyKinematic.fleeRadius = 100.0f;
@@ -426,12 +425,16 @@ int vsPath() {
 
     sf::Clock clock;
     int currentTargetIndex = 0;
-    const float positionTolerance = 10.0f;
+    const float positionTolerance = 100.0f;
 
    // std::cout << "Path positions:" << std::endl;
     for (const auto& pos : pathWorldPositions) {
      //   std::cout << "(" << pos.x << ", " << pos.y << ")" << std::endl;
     }
+
+    // Add goal position in world coordinates (9,9 in tile coordinates)
+    sf::Vector2f goalPosition((goal.x + 0.5f) * tileSize, (goal.y + 0.5f) * tileSize);
+    const float GOAL_RADIUS = 50.0f;  // How close the boid needs to be to count as reaching the goal
 
     while (window.isOpen()) {
         sf::Time deltaTime = clock.restart();
@@ -462,8 +465,8 @@ int vsPath() {
                 // Set the current target position with all necessary parameters
                 Kinematic targetKinematic;
                 targetKinematic.position = pathWorldPositions[currentTargetIndex];
-                targetKinematic.maxSpeed = 100.0f;
-                targetKinematic.maxAcceleration = 100.0f;
+                targetKinematic.maxSpeed = 400.0f;          // Increased
+                targetKinematic.maxAcceleration = 200.0f;   // Increased
                 targetKinematic.maxAngularAcceleration = 5.0f;
                 targetKinematic.maxRotation = 5.0f;
                 targetKinematic.arrivalRadius = 3.0f;
@@ -497,8 +500,22 @@ int vsPath() {
 
         // Update and draw the enemy boid
         enemyBoid.update(dt, boids[0]->getKinematic(), mapData, tileSize, false);
-        enemyBoid.move(dt);
+        enemyBoid.move(dt, mapData);  // Updated to include mapData parameter
         enemyBoid.draw();
+
+        // After updating boid positions but before drawing
+        // Check if boid has reached the goal
+        sf::Vector2f boidPosition = boids[0]->getPosition();
+        float distanceToGoal = std::sqrt(
+            std::pow(boidPosition.x - goalPosition.x, 2) +
+            std::pow(boidPosition.y - goalPosition.y, 2)
+        );
+
+        if (distanceToGoal <= GOAL_RADIUS) {
+            std::cout << "Goal reached! Closing window..." << std::endl;
+            window.close();
+            break;
+        }
 
         window.display();
     }

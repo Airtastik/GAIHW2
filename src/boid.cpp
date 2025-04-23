@@ -8,7 +8,7 @@
 #endif
 
 boid::boid(sf::RenderWindow* w, sf::Texture& tex, std::vector<crumb>* crumbs, Kinematic boidKin)
-    : arrive(new Arrive()), align(new Align())
+    : arrive(new Arrive()), align(new Align()), decisionTree(nullptr)  // Initialize decisionTree
 {
     window = w;
     kinematic = boidKin;
@@ -28,53 +28,53 @@ boid::boid(sf::RenderWindow* w, sf::Texture& tex, std::vector<crumb>* crumbs, Ki
 boid::~boid() {
     delete arrive;
     delete align;
-    delete decisionTree;
+    if (decisionTree) {
+        delete decisionTree;
+        decisionTree = nullptr;
+    }
 }
 
 // Other methods remain unchanged...
 
 // Build the decision tree for intelligent behavior
 void boid::buildDecisionTree() {
-    // ...existing code...
-
-    // Add path deviation check
-    auto isPathBlocked = [](const Kinematic& k, const Kinematic& t,
-                           const Kinematic& /*e*/,
-                           const std::vector<std::vector<int>>& mapData,
-                           int tileSize) -> bool {
-        // Check if there's a wall between current position and target
-        sf::Vector2f direction = t.position - k.position;
-        float distance = std::sqrt(direction.x * direction.x + direction.y * direction.y);
-        sf::Vector2f normalized = direction / distance;
-
-        // Check several points along the path
-        for (float d = 0; d < distance; d += tileSize / 2.0f) {
-            sf::Vector2f checkPos = k.position + normalized * d;
-            int checkX = static_cast<int>(checkPos.x / tileSize);
-            int checkY = static_cast<int>(checkPos.y / tileSize);
-
-            if (checkX >= 0 && static_cast<size_t>(checkX) < mapData[0].size() &&
-                checkY >= 0 && static_cast<size_t>(checkY) < mapData.size() &&
-                mapData[checkY][checkX] == 1) {
-                return true; // Path is blocked
-            }
-        }
-        return false;
+    // Delete old tree if it exists
+    if (decisionTree) {
+        delete decisionTree;
+        decisionTree = nullptr;
+    }
+    
+    const float ENEMY_DETECTION_RADIUS = 50.0f; // Move constant definition here
+    
+    // Check if enemy is too close
+    auto isEnemyNearby = [ENEMY_DETECTION_RADIUS](const Kinematic& k, const Kinematic& /*t*/,
+                           const Kinematic& e,
+                           const std::vector<std::vector<int>>& /*map*/,
+                           int /*tileSize*/) -> bool {
+        sf::Vector2f toEnemy = e.position - k.position;
+        float distSq = toEnemy.x * toEnemy.x + toEnemy.y * toEnemy.y;
+        return distSq < ENEMY_DETECTION_RADIUS * ENEMY_DETECTION_RADIUS;
     };
 
-    auto pathDeviationNode = new PathDeviationNode();
-    auto normalPathNode = new ActionNode([this](const Kinematic& k, const Kinematic& t,
-                                              const Kinematic& e,
-                                              const std::vector<std::vector<int>>& map,
-                                              int size) -> sf::Vector2f {
-        // Normal path following behavior
-        return arrive->calculate(k, t);
-    });
+    // Create behavior nodes
+    auto enemyAvoidNode = new EnemyAvoidanceNode();
+    auto pathNode = new PathDeviationNode();
+    auto normalNode = new ActionNode(
+        [this](const Kinematic& k, const Kinematic& t,
+               [[maybe_unused]] const Kinematic& e,
+               [[maybe_unused]] const std::vector<std::vector<int>>& map,
+               [[maybe_unused]] int size) -> sf::Vector2f {
+            return arrive->calculate(k, t);
+        }
+    );
 
-    auto pathChoice = new DecisionBranch(isPathBlocked, pathDeviationNode, normalPathNode);
-
-    // Add to your existing behavior tree
-    root = pathChoice;
+    // Build the tree
+    decisionTree = new DecisionBranch(isEnemyNearby, 
+                                     enemyAvoidNode,  // If enemy is near, avoid
+                                     new DecisionBranch(isPathBlocked,
+                                                      pathNode,    // If path blocked, deviate
+                                                      normalNode   // Otherwise normal movement
+                                     ));
 }
 // Helper functions implementation
 float boid::length(const sf::Vector2f& v) {
@@ -96,6 +96,23 @@ sf::Vector2f boid::getPosition() const {
 void boid::move(float dt) {
     // Update position based on velocity
     kinematic.position += kinematic.velocity * dt;
+    
+    // Bounce off window boundaries
+    if (kinematic.position.x < 0) {
+        kinematic.position.x = 0;
+        kinematic.velocity.x = -kinematic.velocity.x;
+    } else if (kinematic.position.x > WINDOW_WIDTH) {
+        kinematic.position.x = WINDOW_WIDTH;
+        kinematic.velocity.x = -kinematic.velocity.x;
+    }
+    
+    if (kinematic.position.y < 0) {
+        kinematic.position.y = 0;
+        kinematic.velocity.y = -kinematic.velocity.y;
+    } else if (kinematic.position.y > WINDOW_HEIGHT) {
+        kinematic.position.y = WINDOW_HEIGHT;
+        kinematic.velocity.y = -kinematic.velocity.y;
+    }
     
     // Update orientation based on velocity
     if (length(kinematic.velocity) > 0.1f) {
@@ -129,20 +146,51 @@ void boid::update(float dt, const Kinematic& targetKinematic) {
     if (speed > kinematic.maxSpeed) {
         kinematic.velocity = normalize(kinematic.velocity) * kinematic.maxSpeed;
     }
+
+    // Move the boid
+    move(dt);
 }
 
-void boid::updateWithEnemy(float dt, Kinematic targetKin, const Kinematic& enemyKin,
-                          const std::vector<std::vector<int>>& mapData, int tileSize) {
-    // Execute decision tree to get steering behavior
-    sf::Vector2f steering = decisionTree->makeDecision(kinematic, targetKin, enemyKin, mapData, tileSize);
+void boid::update(float dt, const Kinematic& targetKinematic, [[maybe_unused]] const Kinematic& enemyKinematic) {
+    // Get normal steering behavior
+    sf::Vector2f steering = arrive->calculate(kinematic, targetKinematic);
+    
+    // Add boundary avoidance
+    sf::Vector2f boundaryForce = avoidBoundary();
+    steering += boundaryForce;
     
     // Apply steering
     kinematic.velocity += steering * dt;
     
+    // Clamp position to window bounds
+    kinematic.position.x = std::clamp(kinematic.position.x, 0.0f, WINDOW_WIDTH);
+    kinematic.position.y = std::clamp(kinematic.position.y, 0.0f, WINDOW_HEIGHT);
+    
     // Limit speed
-    if (length(kinematic.velocity) > kinematic.maxSpeed) {
+    float speed = length(kinematic.velocity);
+    if (speed > kinematic.maxSpeed) {
         kinematic.velocity = normalize(kinematic.velocity) * kinematic.maxSpeed;
     }
+
+    // Move the boid
+    move(dt);
+}
+
+void boid::updateWithEnemy(float dt, Kinematic targetKin, const Kinematic& enemyKin,
+                          const std::vector<std::vector<int>>& mapData, int tileSize) {
+    if (!decisionTree) return;
+
+    // Calculate steering
+    sf::Vector2f steering = decisionTree->makeDecision(kinematic, targetKin, enemyKin, mapData, tileSize);
     
+    // Apply steering directly
+    kinematic.velocity += steering * dt;
+    
+    // Only limit final speed
+    float currentSpeed = length(kinematic.velocity);
+    if (currentSpeed > kinematic.maxSpeed) {
+        kinematic.velocity = normalize(kinematic.velocity) * kinematic.maxSpeed;
+    }
+
     move(dt);
 }
