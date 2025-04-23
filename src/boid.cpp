@@ -94,8 +94,30 @@ sf::Vector2f boid::getPosition() const {
 }
 
 void boid::move(float dt) {
-    // Update position based on velocity
+    // Save previous position
+    sf::Vector2f prevPosition = kinematic.position;
+    
+    // Update position
     kinematic.position += kinematic.velocity * dt;
+    
+    try {
+        if (!mapData.empty() && !mapData[0].empty()) {
+            int tileX = static_cast<int>(kinematic.position.x / 100);
+            int tileY = static_cast<int>(kinematic.position.y / 100);
+            
+            // Bounds checking
+            if (tileX >= 0 && tileX < static_cast<int>(mapData[0].size()) &&
+                tileY >= 0 && tileY < static_cast<int>(mapData.size())) {
+                
+                if (mapData[tileY][tileX] == 1) {  // Wall collision
+                    kinematic.position = prevPosition;
+                    kinematic.velocity = -kinematic.velocity * 0.8f;
+                }
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error in move: " << e.what() << std::endl;
+    }
     
     // Bounce off window boundaries
     if (kinematic.position.x < 0) {
@@ -177,20 +199,30 @@ void boid::update(float dt, const Kinematic& targetKinematic, [[maybe_unused]] c
 }
 
 void boid::updateWithEnemy(float dt, Kinematic targetKin, const Kinematic& enemyKin,
-                          const std::vector<std::vector<int>>& mapData, int tileSize) {
+                          const std::vector<std::vector<int>>& newMapData, int tileSize) {
     if (!decisionTree) return;
 
-    // Calculate steering
-    sf::Vector2f steering = decisionTree->makeDecision(kinematic, targetKin, enemyKin, mapData, tileSize);
-    
-    // Apply steering directly
-    kinematic.velocity += steering * dt;
-    
-    // Only limit final speed
-    float currentSpeed = length(kinematic.velocity);
-    if (currentSpeed > kinematic.maxSpeed) {
-        kinematic.velocity = normalize(kinematic.velocity) * kinematic.maxSpeed;
-    }
+    try {
+        // Deep copy the map data
+        mapData.resize(newMapData.size());
+        for (size_t i = 0; i < newMapData.size(); ++i) {
+            mapData[i] = newMapData[i];
+        }
 
-    move(dt);
+        // Calculate steering
+        sf::Vector2f steering = decisionTree->makeDecision(kinematic, targetKin, enemyKin, mapData, tileSize);
+        
+        // Apply steering
+        kinematic.velocity += steering * dt;
+        
+        // Limit speed
+        float currentSpeed = length(kinematic.velocity);
+        if (currentSpeed > kinematic.maxSpeed) {
+            kinematic.velocity = normalize(kinematic.velocity) * kinematic.maxSpeed;
+        }
+
+        move(dt);
+    } catch (const std::exception& e) {
+        std::cerr << "Error in updateWithEnemy: " << e.what() << std::endl;
+    }
 }

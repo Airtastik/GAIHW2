@@ -46,6 +46,7 @@ private:
     sf::RenderWindow* window;
     std::vector<crumb>* breadcrumbs;
     DecisionNode* decisionTree;  // Now DecisionNode is recognized
+    std::vector<std::vector<int>> mapData{10, std::vector<int>(10, 0)}; // Initialize with size
     
     Kinematic kinematic;
     Kinematic targetKinematic;

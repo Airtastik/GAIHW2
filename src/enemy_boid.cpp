@@ -99,36 +99,32 @@ void EnemyBoid::draw() {
     window->draw(shape);
 }
 void EnemyBoid::move(float dt, const std::vector<std::vector<int>>& mapData) {
-    // Save previous position for wall collision check
+    // Early return if map data is invalid
+    if (mapData.empty() || mapData[0].empty()) {
+        // Just do basic movement without wall collision
+        kinematic.position += kinematic.velocity * dt;
+        return;
+    }
+    
+    // Save previous position
     sf::Vector2f prevPosition = kinematic.position;
     
-    // Check for wall collisions in the map
-    int tileX = static_cast<int>(kinematic.position.x / 100); // assuming tileSize is 100
-    int tileY = static_cast<int>(kinematic.position.y / 100);
-    
-    // If we hit a wall tile, bounce back
-    if (tileX >= 0 && tileX < 10 && tileY >= 0 && tileY < 10) {  // assuming 10x10 map
-        if (mapData[tileY][tileX] == 1) {  // Wall collision
-            kinematic.position = prevPosition;
-            
-            // Calculate normal vector for the wall (simplified to cardinal directions)
-            sf::Vector2f normal(0, 0);
-            if (kinematic.velocity.x > 0) normal.x = -1;
-            if (kinematic.velocity.x < 0) normal.x = 1;
-            if (kinematic.velocity.y > 0) normal.y = -1;
-            if (kinematic.velocity.y < 0) normal.y = 1;
-            
-            // Reflect velocity
-            sf::Vector2f reflect = kinematic.velocity;
-            if (normal.x != 0) reflect.x = -kinematic.velocity.x;
-            if (normal.y != 0) reflect.y = -kinematic.velocity.y;
-            kinematic.velocity = reflect;
-        }
-    }
-
     // Update position
     kinematic.position += kinematic.velocity * dt;
-
+    
+    // Get tile positions with bounds checking
+    int tileX = static_cast<int>(kinematic.position.x / 100);
+    int tileY = static_cast<int>(kinematic.position.y / 100);
+    
+    if (tileX >= 0 && tileX < static_cast<int>(mapData[0].size()) && 
+        tileY >= 0 && tileY < static_cast<int>(mapData.size())) {
+        
+        if (mapData[tileY][tileX] == 1) {
+            kinematic.position = prevPosition;
+            kinematic.velocity = -kinematic.velocity * 0.8f;
+        }
+    }
+    
     // Bounce off window boundaries
     if (kinematic.position.x < 0) {
         kinematic.position.x = 0;
